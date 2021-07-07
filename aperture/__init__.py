@@ -18,7 +18,6 @@ from discord import (
     DMChannel,
 )
 from discord.ext import commands
-from discord.ext.commands import Bot as BotBase
 
 from .core import CustomContext, error_handler
 
@@ -40,7 +39,7 @@ if sys.version_info[:2] in [(3, 8), (3, 9)] and sys.platform.startswith('win'):
     log.debug('Asyncio Event Loop Policy set to Windows Selector Event Loop Policy')
 
 
-class Bot(BotBase):
+class Bot(commands.Bot):
     def __init__(self):
         super().__init__(
             case_insensitive=True,
@@ -99,9 +98,9 @@ class Bot(BotBase):
                 return list(map(''.join, itertools.product(*zip(str(prefix).upper(), str(prefix).lower()))))
             except KeyError:
                 async with self.db_conn.transaction() as trans:
-                    await self.db_conn.execute('INSERT INTO guild_data (guild_id, prefix, prefix_case_insensitive) VALUES ($3, $1, $2) ON CONFLICT (guild_id) DO UPDATE guild_data SET prefix=$1, prefix_case_insensitive=$2 WHERE guild_id=$3;')
+                    await self.db_conn.execute('INSERT INTO guild_data (guild_id, prefix, prefix_case_insensitive) VALUES ($3, $1, $2) ON CONFLICT (guild_id) DO UPDATE SET prefix=EXCLUDED.prefix, prefix_case_insensitive=EXCLUDED.prefix_case_insensitive;')
                     return list(map(''.join, itertools.product(*zip(str(default_prefix).upper(), str(default_prefix).lower()))))
-        log.debug(f'get_prefix unable to get prefix from any existing data and function\nMessage ID: {message.id}, Invoker ID: {message.author.id}, Guild ID: {message.guild.id}')
+        log.debug(f'get_prefix unable to get prefix from any existing data and function\nMessage ID: {message.id}, Author ID: {message.author.id}, Guild ID: {message.guild.id}')
 
     def setup(self):
         self.load_cogs()
@@ -152,7 +151,7 @@ class Bot(BotBase):
     async def on_command_error(self, ctx, exc) -> None:
         if ctx.command.has_error_handler():
             return
-        log.debug(f'Command {ctx.command.name} responded with error {exc}\nMessage ID: {ctx.message.id}, Invoker ID: {ctx.author.id}, Guild ID: {ctx.guild.id}')
+        log.debug(f'Command {ctx.command.name} responded with error {exc}\nMessage ID: {ctx.message.id}, Author ID: {ctx.author.id}, Guild ID: {ctx.guild.id}')
         await error_handler(ctx, exc)
 
     async def process_commands(self, message: Message) -> None:
