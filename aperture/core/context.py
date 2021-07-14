@@ -22,7 +22,8 @@ from discord import Message
 from discord.ext import commands
 
 class CustomContext(commands.Context):
-    async def send(self, content=None, *, tts=False, embed=None, file=None, files=None, delete_after=None, nonce=None, allowed_mentions=None, reference=None, mention_author=None):
+    async def fsend(self, content=None, *, tts=False, embed=None, file=None, files=None, delete_after=None, nonce=None, allowed_mentions=None, reference=None, mention_author=None):
+        """First response in every command must use this method to enable Message edit/delete response functionality"""
         try:
             response: Message = self.bot.old_responses[self.message.id]
             with suppress(Exception):
@@ -33,7 +34,8 @@ class CustomContext(commands.Context):
             self.bot.old_responses[self.message.id] = response
             return response
             
-    async def reply(self, content=None, *, tts=False, embed=None, file=None, files=None, delete_after=None, nonce=None, allowed_mentions=None, mention_author=None):
+    async def freply(self, content=None, *, tts=False, embed=None, file=None, files=None, delete_after=None, nonce=None, allowed_mentions=None, mention_author=None):
+        """First response in every command must use this method to enable Message edit/delete response functionality"""
         try:
             response: Message = self.bot.old_responses[self.message.id]
             with suppress(Exception):
