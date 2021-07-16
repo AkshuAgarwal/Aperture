@@ -148,8 +148,8 @@ class Bot(commands.Bot):
             except KeyError:
                 async with self.pool.acquire() as conn:
                     async with conn.transaction() as trans:
-                        log.warn(f'get_prefix unable to get prefix from any existing data and function\n'\
-                            'Message ID: {message.id}, Author ID: {message.author.id}, Guild ID: {message.guild.id}')
+                        log.warn('get_prefix unable to get prefix from any existing data and function\n'\
+                            f'Message ID: {message.id}, Author ID: {message.author.id}, Guild ID: {message.guild.id}')
                         await conn.execute('INSERT INTO guild_data (guild_id, prefix, prefix_case_insensitive) VALUES ($3, $1, $2) '\
                             'ON CONFLICT (guild_id) DO UPDATE SET prefix=EXCLUDED.prefix, prefix_case_insensitive=EXCLUDED.'\
                                 'prefix_case_insensitive;')
@@ -239,7 +239,7 @@ class Bot(commands.Bot):
         if ctx.command.has_error_handler():
             return
         log.debug(f'Command {ctx.command.name} responded with error {exc}\nMessage ID: {ctx.message.id}, '\
-            'Author ID: {ctx.author.id}, Guild ID: {ctx.guild.id}')
+            f'Author ID: {ctx.author.id}, Guild ID: {ctx.guild.id}')
         await error_handler(ctx, exc)
 
     async def process_commands(self, message: Message) -> None:

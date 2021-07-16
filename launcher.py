@@ -4,8 +4,4 @@ __version__ = '0.0.1'
 
 if __name__ == '__main__':
     bot = Bot()
-
-    @bot.command()
-    async def ping(ctx):
-        await ctx.send('pong!')
     bot.run(__version__)
