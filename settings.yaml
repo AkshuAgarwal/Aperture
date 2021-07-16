@@ -1,0 +1,9 @@
+startup:
+  load-jishaku: true
+  load-cogs-on-startup: true
+
+bot:
+  default-prefix: "ap!"
+  owner-only: true
+
+debug-mode: true
