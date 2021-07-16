@@ -16,13 +16,31 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import asyncio
 import sys
 import traceback
 from contextlib import suppress
 
 from discord.ext.commands import *
 
+
+class ApertureError(Exception):
+    """Base exception class for all Aperture's Internal errors."""
+
+class SettingsError(ApertureError):
+    """Exception raised for errors in the settings file."""
+
+    def __init__(self, *args, **kwargs):
+        default_message = "Settings file is not configured properly."
+        
+        if not args:
+            args = (default_message, )
+        
+        super().__init__(*args, **kwargs)
+
+
 async def error_handler(ctx, error):
+    """Error handler for discord.py related Errors."""
     ignored = (CommandNotFound, )
     error = getattr(error, 'original', error)
 
@@ -72,6 +90,8 @@ async def error_handler(ctx, error):
         await ctx.reply(f'Expected space after closing quote but `{error.char}` found!')
     elif isinstance(error, ExpectedClosingQuoteError):
         await ctx.reply(f'Expected `{error.close_quote}` Closing quote but not Found!')
+    elif isinstance(error, CheckFailure) and 'global check' in str(error):
+        await ctx.reply('The Bot is currently running in owner-only mode.')
     elif isinstance(error, CheckAnyFailure):
         pass
     elif isinstance(error, PrivateMessageOnly):
@@ -113,6 +133,10 @@ async def error_handler(ctx, error):
         await ctx.reply('Unable to find the Extension!')
     elif isinstance(error, CommandRegistrationError):
         await ctx.reply(f'Command with name `{error.name}` cannot be addded because it\'s name is already taken by a different Command.\n> Alias Conflict: `{error.alias_conflict}`')
+    
+    elif isinstance(error, asyncio.exceptions.TimeoutError):
+        await ctx.reply('Timed out waiting for response...')
+        
     else:
         await ctx.reply(f'Oops! Some error Occured...\n> Error: `{error}`')
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
