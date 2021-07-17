@@ -81,15 +81,22 @@ extension_name: Name of the extension to be loaded. Extension names are delimite
         else:
             _extensions = extensions_name.split()
             _loaded_extensions = []
-            for ext in os.listdir('./aperture/cogs'):
-                if ext in _extensions:
+            _failed_extensions = {}
+            for ext in _extensions:
+                try:
                     self.bot.load_extension(f'aperture.cogs.{ext}')
                     log.debug(f'loaded {ext} on command.')
                     _loaded_extensions.append(ext)
-                
-            return await ctx.freply(f'{emoji.greenTick} Loaded Cog(s) - `{"`, `".join(i for i in _loaded_extensions)}`')
+                except commands.ExtensionError as exc:
+                    exc = getattr(exc, 'original', exc)
+                    log.warn(f'extension {ext} failed to load:  {exc.__class__.__name__}: {exc}')
+                    _failed_extensions[ext] = exc.__class__.__name__ + ': ' + str(exc)
+            
+            _success_fmt = str('**Loaded Extensions:** ' + ', '.join(f'`{i}`' for i in _loaded_extensions) + '\n') if _loaded_extensions else ''
+            _failed_fmt = str('**Failed Extensions:**\n> ' + '\n> '.join(f'`{k}`: `{v}`' for k, v in _failed_extensions.items())) if _failed_extensions else ''
+            return await ctx.freply(_success_fmt + _failed_fmt)
 
-    
+
     @commands.command(
         name='unload',
         brief='Unloads an Extension',
@@ -133,15 +140,22 @@ extension_name: Name of the extension to be unloaded. Extension names are delimi
         else:
             _extensions = extensions_name.split()
             _unloaded_extensions = []
-            for ext in os.listdir('./aperture/cogs'):
-                if ext in _extensions:
+            _failed_extensions = {}
+            for ext in _extensions:
+                try:
                     self.bot.unload_extension(f'aperture.cogs.{ext}')
                     log.debug(f'unloaded {ext} on command.')
                     _unloaded_extensions.append(ext)
+                except commands.ExtensionError as exc:
+                    exc = getattr(exc, 'original', exc)
+                    log.warn(f'extension {ext} failed to unload:  {exc.__class__.__name__}: {exc}')
+                    _failed_extensions[ext] = exc.__class__.__name__ + ': ' + str(exc)
                 
-            return await ctx.freply(f'{emoji.greenTick} Unloaded Cog(s) - `{"`, `".join(i for i in _unloaded_extensions)}`')
+            _success_fmt = str('**Unloaded Extensions:** ' + ', '.join(f'`{i}`' for i in _unloaded_extensions) + '\n') if _unloaded_extensions else ''
+            _failed_fmt = str('**Failed Extensions:**\n> ' + '\n> '.join(f'`{k}`: `{v}`' for k, v in _failed_extensions.items())) if _failed_extensions else ''
+            return await ctx.freply(_success_fmt + _failed_fmt)
 
-    
+
     @commands.command(
         name='reload',
         brief='Reloads an Extension',
@@ -184,10 +198,17 @@ extension_name: Name of the extension to be reloaded. Extension names are delimi
         else:
             _extensions = extensions_name.split()
             _reloaded_extensions = []
-            for ext in os.listdir('./aperture/cogs'):
-                if ext in _extensions:
+            _failed_extensions = {}
+            for ext in _extensions:
+                try:
                     self.bot.reload_extension(f'aperture.cogs.{ext}')
                     log.debug(f'reloaded {ext} on command.')
                     _reloaded_extensions.append(ext)
+                except commands.ExtensionError as exc:
+                    exc = getattr(exc, 'original', exc)
+                    log.warn(f'extension {ext} failed to reload:  {exc.__class__.__name__}: {exc}')
+                    _failed_extensions[ext] = exc.__class__.__name__ + ': ' + str(exc)
                 
-            return await ctx.freply(f'{emoji.greenTick} Reloaded Cog(s) - `{"`, `".join(i for i in _reloaded_extensions)}`')
+            _success_fmt = str('**Reloaded Extensions:** ' + ', '.join(f'`{i}`' for i in _reloaded_extensions) + '\n') if _reloaded_extensions else ''
+            _failed_fmt = str('**Failed Extensions:**\n> ' + '\n> '.join(f'`{k}`: `{v}`' for k, v in _failed_extensions.items())) if _failed_extensions else ''
+            return await ctx.freply(_success_fmt + _failed_fmt)
