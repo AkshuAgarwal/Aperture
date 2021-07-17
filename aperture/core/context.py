@@ -16,32 +16,106 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from contextlib import suppress
+from contextlib import suppress as _suppress
 
 from discord import Message
 from discord.ext import commands
 
 class CustomContext(commands.Context):
-    async def fsend(self, content=None, *, tts=False, embed=None, file=None, files=None, delete_after=None, nonce=None, allowed_mentions=None, reference=None, mention_author=None):
+    async def freply(
+        self,
+        content=None,
+        *,
+        tts=None,
+        embed=None,
+        file=None,
+        files=None,
+        delete_after=None,
+        nonce=None,
+        allowed_mentions=None,
+        reference=None,
+        mention_author=None,
+        view=None,
+        embeds=[],
+        attachments=[],
+        suppress=False
+        ):
         """First response in every command must use this method to enable Message edit/delete response functionality"""
         try:
             response: Message = self.bot.old_responses[self.message.id]
-            with suppress(Exception):
+            with _suppress(Exception):
                 await response.clear_reactions()
-            return await response.edit(content=content, tts=tts, embed=embed, file=file, files=files, delete_after=delete_after, nonce=nonce, allowed_mentions=allowed_mentions, reference=reference, mention_author=mention_author)
+            return await response.edit(
+                content=content,
+                embed=embed,
+                attachments=attachments,
+                suppress=suppress,
+                delete_after=delete_after,
+                allowed_mentions=allowed_mentions,
+                view=view
+            )
         except KeyError:
-            response = await super().send(content=content, tts=tts, embed=embed, file=file, files=files, delete_after=delete_after, nonce=nonce, allowed_mentions=allowed_mentions, reference=reference, mention_author=mention_author)
+            response = await super().send(
+                content=content,
+                tts=tts,
+                embed=embed,
+                embeds=embeds,
+                file=file,
+                files=files,
+                delete_after=delete_after,
+                nonce=nonce,
+                allowed_mentions=allowed_mentions,
+                reference=reference,
+                mention_author=mention_author,
+                view=view
+            )
             self.bot.old_responses[self.message.id] = response
             return response
             
-    async def freply(self, content=None, *, tts=False, embed=None, file=None, files=None, delete_after=None, nonce=None, allowed_mentions=None, mention_author=None):
+    async def freply(
+        self,
+        content=None,
+        *,
+        tts=None,
+        embed=None,
+        file=None,
+        files=None,
+        delete_after=None,
+        nonce=None,
+        allowed_mentions=None,
+        mention_author=None,
+        view=None,
+        embeds=[],
+        attachments=[],
+        suppress=False
+        ):
         """First response in every command must use this method to enable Message edit/delete response functionality"""
         try:
             response: Message = self.bot.old_responses[self.message.id]
-            with suppress(Exception):
+            with _suppress(Exception):
                 await response.clear_reactions()
-            return await response.edit(content=content, tts=tts, embed=embed, file=file, files=files, delete_after=delete_after, nonce=nonce, allowed_mentions=allowed_mentions, mention_author=mention_author)
+            return await response.edit(
+                content=content, 
+                embed=embed,
+                attachments=attachments,
+                suppress=suppress,
+                delete_after=delete_after,
+                allowed_mentions=allowed_mentions,
+                view=view
+            )
         except KeyError:
-            response = await super().reply(content=content, tts=tts, embed=embed, file=file, files=files, delete_after=delete_after, nonce=nonce, allowed_mentions=allowed_mentions, mention_author=mention_author)
+            response = await super().reply(
+                content=content,
+                tts=tts,
+                embed=embed,
+                embeds=embeds,
+                file=file,
+                files=files,
+                delete_after=delete_after,
+                nonce=nonce,
+                allowed_mentions=allowed_mentions,
+                mention_author=mention_author,
+                view=view
+            )
             self.bot.old_responses[self.message.id] = response
             return response
