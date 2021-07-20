@@ -38,11 +38,6 @@ class Developer(commands.Cog):
         self.description = """Developer commands are the commands which are restricted to be used by Developer (Bot Owner) only.
 These are used to manage the bot and data and are not meant to be used by anyone else."""
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        log.debug('Developer Cog ready')
-        print('Developer Cog ready')
-
 
     @commands.command(
         name='load',
@@ -65,7 +60,7 @@ extension_name: Name of the extension to be loaded. Extension names are delimite
         if view.value is None:
             raise asyncio.exceptions.TimeoutError
         elif view.value is False:
-            return await _response.edit(content='Cancelled the Task!', view=view)
+            return await _response.edit(content='Cancelled Task!', view=view)
         else:
             pass
 
@@ -123,7 +118,7 @@ extension_name: Name of the extension to be unloaded. Extension names are delimi
         if view.value is None:
             raise asyncio.exceptions.TimeoutError
         elif view.value is False:
-            return await _response.edit(content='Cancelled the Task!', view=view)
+            return await _response.edit(content='Cancelled Task!', view=view)
         else:
             pass
 
@@ -182,7 +177,7 @@ extension_name: Name of the extension to be reloaded. Extension names are delimi
         if view.value is None:
             raise asyncio.exceptions.TimeoutError
         elif view.value is False:
-            return await _response.edit(content='Cancelled the Task!', view=view)
+            return await _response.edit(content='Cancelled Task!', view=view)
         else:
             pass
 
