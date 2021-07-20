@@ -121,7 +121,7 @@ async def error_handler(ctx, error):
     elif isinstance(error, CommandInvokeError):
         await ctx.reply(f'Oops! Some error occured while invoking the command!\n> Error: `{error.__cause__}`')
     elif isinstance(error, CommandOnCooldown):
-        await ctx.reply(f'Woah! Looks like you\'re in hurry! This command is on `{error.cooldown.tpye}` type Cooldown! Try again in `{error.retry_after:,.0f}` seconds.')
+        await ctx.reply(f'Woah! Looks like you\'re in hurry! This command is on `{error.cooldown.type}` type Cooldown! Try again in `{error.retry_after:,.0f}` seconds.')
     elif isinstance(error, MaxConcurrencyReached):
         await ctx.reply(f'Woah! Looks like this command is being used a lot...\nThe command reached it\'s Max Concurrency of `{error.number}` invokers per `{error.per}`. Try again in a few seconds...')
     elif isinstance(error, ExtensionAlreadyLoaded):
