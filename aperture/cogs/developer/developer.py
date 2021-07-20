@@ -16,22 +16,27 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import asyncio
 import os
 import logging
-from contextlib import suppress
 from typing import List
 
+from discord import Message
 from discord.ext import commands
 
 from aperture.core import emoji
+from ._views import ConfirmationView
 
 log = logging.getLogger(__name__)
+
 
 class Developer(commands.Cog):
     _unload_restricted: List[str] = ['developer']
     
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self.description = """Developer commands are the commands which are restricted to be used by Developer (Bot Owner) only.
+These are used to manage the bot and data and are not meant to be used by anyone else."""
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -50,25 +55,19 @@ extension_name: Name of the extension to be loaded. Extension names are delimite
         usage='[extension_name:str, default=all]'
     )
     @commands.is_owner()
-    @commands.bot_has_permissions(
-        send_messages=True,
-        embed_links=True,
-        add_reactions=True)
+    @commands.bot_has_permissions(send_messages=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def _load(self, ctx, *, extensions_name: str = None) -> None:
-        _emojis = [emoji.greenTick, emoji.redCross]
+    async def _load(self, ctx, *, extensions_name: str = None) -> Message:
+        view = ConfirmationView(ctx, timeout=30.0)
+        _response = await ctx.freply('Are you sure to perform the task?', view=view)
+        await view.wait()
 
-        await ctx.message.add_reaction(_emojis[0])
-        await ctx.message.add_reaction(_emojis[1])
-        reaction, _ = await self.bot.wait_for('reaction_add', timeout=30,
-                    check=lambda reaction, user: str(reaction.emoji) in _emojis and \
-                        user == ctx.author and reaction.message == ctx.message)
-        
-        if str(reaction.emoji) == _emojis[1]:
-            with suppress(Exception):
-                await ctx.message.clear_reactions()
-            await ctx.freply(f'{emoji.greenTick} Cancelled Task')
-            return
+        if view.value is None:
+            raise asyncio.exceptions.TimeoutError
+        elif view.value is False:
+            return await _response.edit(content='Cancelled the Task!', view=view)
+        else:
+            pass
 
         if not extensions_name or extensions_name=="--all":
             for ext in os.listdir('./aperture/cogs'):
@@ -77,7 +76,7 @@ extension_name: Name of the extension to be loaded. Extension names are delimite
                     log.debug(f'loaded {ext} on command.')
                 except commands.ExtensionAlreadyLoaded:
                     pass
-            await ctx.freply(f'{emoji.greenTick} Loaded all unloaded Extensions')
+            return await _response.edit(content=f'{emoji.greenTick} Loaded all unloaded Extensions', view=view)
         else:
             _extensions = extensions_name.split()
             _loaded_extensions = []
@@ -92,9 +91,15 @@ extension_name: Name of the extension to be loaded. Extension names are delimite
                     log.warn(f'extension {ext} failed to load:  {exc.__class__.__name__}: {exc}')
                     _failed_extensions[ext] = exc.__class__.__name__ + ': ' + str(exc)
             
-            _success_fmt = str('**Loaded Extensions:** ' + ', '.join(f'`{i}`' for i in _loaded_extensions) + '\n') if _loaded_extensions else ''
-            _failed_fmt = str('**Failed Extensions:**\n> ' + '\n> '.join(f'`{k}`: `{v}`' for k, v in _failed_extensions.items())) if _failed_extensions else ''
-            return await ctx.freply(_success_fmt + _failed_fmt)
+            _success_fmt = str(
+                f'{emoji.greenTick} Loaded Extensions: ' + ', '.join(f'`{i}`' for i in _loaded_extensions) + '\n'
+            ) if _loaded_extensions else ''
+            _failed_fmt = str(
+                f'{emoji.redCross} Failed Extensions:\n> ' + '\n> '.join(
+                    f'`{k}`: `{v}`' for k, v in _failed_extensions.items()
+                )
+            ) if _failed_extensions else ''
+            return await _response.edit(content=_success_fmt + _failed_fmt, view=view)
 
 
     @commands.command(
@@ -108,25 +113,19 @@ extension_name: Name of the extension to be unloaded. Extension names are delimi
         usage='[extension_name:str, default=all]'
     )
     @commands.is_owner()
-    @commands.bot_has_permissions(
-        send_messages=True,
-        embed_links=True,
-        add_reactions=True)
+    @commands.bot_has_permissions(send_messages=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def _unload(self, ctx, *, extensions_name: str = None) -> None:
-        _emojis = [emoji.greenTick, emoji.redCross]
+    async def _unload(self, ctx, *, extensions_name: str = None) -> Message:
+        view = ConfirmationView(ctx, timeout=30.0)
+        _response = await ctx.freply('Are you sure to perform the task?', view=view)
+        await view.wait()
 
-        await ctx.message.add_reaction(_emojis[0])
-        await ctx.message.add_reaction(_emojis[1])
-        reaction, _ = await self.bot.wait_for('reaction_add', timeout=30,
-                    check=lambda reaction, user: str(reaction.emoji) in _emojis and \
-                        user == ctx.author and reaction.message == ctx.message)
-        
-        if str(reaction.emoji) == _emojis[1]:
-            with suppress(Exception):
-                await ctx.message.clear_reactions()
-            await ctx.freply(f'{emoji.greenTick} Cancelled Task')
-            return
+        if view.value is None:
+            raise asyncio.exceptions.TimeoutError
+        elif view.value is False:
+            return await _response.edit(content='Cancelled the Task!', view=view)
+        else:
+            pass
 
         if not extensions_name or extensions_name=="--all":
             for ext in os.listdir('./aperture/cogs'):
@@ -136,7 +135,7 @@ extension_name: Name of the extension to be unloaded. Extension names are delimi
                         log.debug(f'unloaded {ext} on command.')
                     except commands.ExtensionNotLoaded:
                         pass
-            await ctx.freply(f'{emoji.greenTick} Unloaded all loaded Extensions')
+            return await _response.edit(content=f'{emoji.greenTick} Unloaded all loaded Extensions', view=view)
         else:
             _extensions = extensions_name.split()
             _unloaded_extensions = []
@@ -151,9 +150,15 @@ extension_name: Name of the extension to be unloaded. Extension names are delimi
                     log.warn(f'extension {ext} failed to unload:  {exc.__class__.__name__}: {exc}')
                     _failed_extensions[ext] = exc.__class__.__name__ + ': ' + str(exc)
                 
-            _success_fmt = str('**Unloaded Extensions:** ' + ', '.join(f'`{i}`' for i in _unloaded_extensions) + '\n') if _unloaded_extensions else ''
-            _failed_fmt = str('**Failed Extensions:**\n> ' + '\n> '.join(f'`{k}`: `{v}`' for k, v in _failed_extensions.items())) if _failed_extensions else ''
-            return await ctx.freply(_success_fmt + _failed_fmt)
+            _success_fmt = str(
+                f'{emoji.greenTick} Unloaded Extensions: ' + ', '.join(f'`{i}`' for i in _unloaded_extensions) + '\n'
+            ) if _unloaded_extensions else ''
+            _failed_fmt = str(
+                f'{emoji.redCross} Failed Extensions:\n> ' + '\n> '.join(
+                    f'`{k}`: `{v}`' for k, v in _failed_extensions.items()
+                )
+            ) if _failed_extensions else ''
+            return await _response.edit(content=_success_fmt + _failed_fmt, view=view)
 
 
     @commands.command(
@@ -167,25 +172,19 @@ extension_name: Name of the extension to be reloaded. Extension names are delimi
         usage='[extension_name:str, default=all]'
     )
     @commands.is_owner()
-    @commands.bot_has_permissions(
-        send_messages=True,
-        embed_links=True,
-        add_reactions=True)
+    @commands.bot_has_permissions(send_messages=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def _reload(self, ctx, *, extensions_name: str = None) -> None:
-        _emojis = [emoji.greenTick, emoji.redCross]
+    async def _reload(self, ctx, *, extensions_name: str = None) -> Message:
+        view = ConfirmationView(ctx, timeout=30.0)
+        _response = await ctx.freply('Are you sure to perform the task?', view=view)
+        await view.wait()
 
-        await ctx.message.add_reaction(_emojis[0])
-        await ctx.message.add_reaction(_emojis[1])
-        reaction, _ = await self.bot.wait_for('reaction_add', timeout=30,
-                    check=lambda reaction, user: str(reaction.emoji) in _emojis and \
-                        user == ctx.author and reaction.message == ctx.message)
-        
-        if str(reaction.emoji) == _emojis[1]:
-            with suppress(Exception):
-                await ctx.message.clear_reactions()
-            await ctx.freply(f'{emoji.greenTick} Cancelled Task')
-            return
+        if view.value is None:
+            raise asyncio.exceptions.TimeoutError
+        elif view.value is False:
+            return await _response.edit(content='Cancelled the Task!', view=view)
+        else:
+            pass
 
         if not extensions_name or extensions_name=="--all":
             for ext in os.listdir('./aperture/cogs'):
@@ -194,7 +193,7 @@ extension_name: Name of the extension to be reloaded. Extension names are delimi
                     log.debug(f'reloaded {ext} on command.')
                 except commands.ExtensionNotLoaded:
                     pass
-            await ctx.freply(f'{emoji.greenTick} Reloaded all loaded Extensions')
+            return await _response.edit(content=f'{emoji.greenTick} Reloaded all loaded Extensions', view=view)
         else:
             _extensions = extensions_name.split()
             _reloaded_extensions = []
@@ -209,6 +208,12 @@ extension_name: Name of the extension to be reloaded. Extension names are delimi
                     log.warn(f'extension {ext} failed to reload:  {exc.__class__.__name__}: {exc}')
                     _failed_extensions[ext] = exc.__class__.__name__ + ': ' + str(exc)
                 
-            _success_fmt = str('**Reloaded Extensions:** ' + ', '.join(f'`{i}`' for i in _reloaded_extensions) + '\n') if _reloaded_extensions else ''
-            _failed_fmt = str('**Failed Extensions:**\n> ' + '\n> '.join(f'`{k}`: `{v}`' for k, v in _failed_extensions.items())) if _failed_extensions else ''
-            return await ctx.freply(_success_fmt + _failed_fmt)
+            _success_fmt = str(
+                f'{emoji.greenTick} Reloaded Extensions: ' + ', '.join(f'`{i}`' for i in _reloaded_extensions) + '\n'
+            ) if _reloaded_extensions else ''
+            _failed_fmt = str(
+                f'{emoji.redCross} Failed Extensions:\n> ' + '\n> '.join(
+                    f'`{k}`: `{v}`' for k, v in _failed_extensions.items()
+                )
+            ) if _failed_extensions else ''
+            return await _response.edit(content=_success_fmt + _failed_fmt, view=view)
