@@ -21,6 +21,7 @@ import sys
 import traceback
 from contextlib import suppress
 
+from discord import InteractionResponded
 from discord.ext.commands import *
 
 
@@ -133,7 +134,9 @@ async def error_handler(ctx, error):
         await ctx.reply('Unable to find the Extension!')
     elif isinstance(error, CommandRegistrationError):
         await ctx.reply(f'Command with name `{error.name}` cannot be addded because it\'s name is already taken by a different Command.\n> Alias Conflict: `{error.alias_conflict}`')
-    
+    elif isinstance(error, InteractionResponded):
+        await ctx.reply(f'The interaction is already Responded!')
+
     elif isinstance(error, asyncio.exceptions.TimeoutError):
         await ctx.reply('Timed out waiting for response...')
         
