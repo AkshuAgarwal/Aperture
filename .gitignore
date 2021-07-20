@@ -9,3 +9,6 @@ __pycache__
 # Log Files
 tmp
 *.log
+
+# IDE
+.vscode
