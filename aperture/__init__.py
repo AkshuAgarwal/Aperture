@@ -16,19 +16,20 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import aiohttp
-import asyncio
-import asyncpg
-import itertools
 import os
 import sys
-import yaml
-import logging, logging.config
-from contextlib import suppress
+import asyncio
+import itertools
+import logging
+import logging.config
 from datetime import datetime
-from dotenv import load_dotenv
-from typing import List, Union, Optional
+from contextlib import suppress
+from typing import Any, Callable, List, Optional, Union
 
+import aiohttp
+import asyncpg
+import yaml
+from dotenv import load_dotenv
 from discord import (
     Message,
     Intents,
@@ -42,14 +43,17 @@ from aperture.core.error import SettingsError
 
 log = logging.getLogger(__name__)
 
+# Creates a directory, requrired for logs.
 if not os.path.exists('./tmp'):
     os.makedirs('./tmp')
     print('Created directory "tmp" in the project root directory')
 
+# Load the logging configuration.
 with open('./logging.yaml', 'r', encoding='UTF-8') as stream:
     log_config = yaml.load(stream, Loader=yaml.FullLoader)
     logging.config.dictConfig(log_config)
 
+# Load the settings file.
 with open('./settings.yaml', 'r', encoding='utf-8') as file:
     settings = yaml.load(file, Loader=yaml.FullLoader)
     log.debug('Load settings file')
@@ -72,19 +76,21 @@ class Bot(commands.Bot):
             strip_after_prefix=True,
         )
 
+        # Create some required variables and constants
         self.ready: bool = False
         self.aiohttp_session: Optional[aiohttp.ClientSession] = None
         self.pool: Optional[asyncpg.Pool] = None
-        
+
         self.launch_time = datetime.utcnow()
-        self._message_edit_timeout: int = 120
-        self.old_responses: dict = {}
+        self.message_edit_timeout: int = 120
+        self.old_responses: dict = {} # A variable dict storing all responses in cache to allow respond on edit/delete.
         self.prefixes: dict = {}
 
 
         self.loop.create_task(self.startup())
         self.loop.run_until_complete(self.create_pool(self.loop))
 
+        # Add owner-only check on the bot if enabled in settings
         try:
             if settings['bot']['owner-only'] is True:
                 self.add_check(self.owner_only)
@@ -94,6 +100,7 @@ class Bot(commands.Bot):
 
 
     async def create_pool(self, loop) -> asyncpg.Connection:
+        """Create database pool for the bot"""
         self.pool: asyncpg.Pool = await asyncpg.create_pool(
             host=os.getenv('DB_HOST'),
             port=int(os.getenv('DB_PORT')),
@@ -107,7 +114,9 @@ class Bot(commands.Bot):
         log.info('Created Database Pool')
         return self.pool
 
-    def _get_case_insensitive_prefixes(self, prefix: str) -> List[str]:
+    @staticmethod
+    def _get_case_insensitive_prefixes(prefix: str) -> List[str]:
+        """Return a list of prefix in different Case"""
         return list(
             map(
                 ''.join, itertools.product(
@@ -118,8 +127,9 @@ class Bot(commands.Bot):
                 )
             )
         )
-    
-    async def get_prefix(self, message: Message) -> Union[list, str]:
+
+    async def get_prefix(self, message: Message) -> Union[List[str], str]:
+        # Modified Library's internal method to get prefix for the message context
         try:
             default_prefix = settings['bot']['default-prefix'] or 'ap!'
         except KeyError:
@@ -147,35 +157,36 @@ class Bot(commands.Bot):
                 return self._get_case_insensitive_prefixes(prefix)
             except KeyError:
                 async with self.pool.acquire() as conn:
-                    async with conn.transaction() as trans:
-                        log.warn('get_prefix unable to get prefix from any existing data and function\n'\
-                            f'Message ID: {message.id}, Author ID: {message.author.id}, Guild ID: {message.guild.id}')
-                        await conn.execute('INSERT INTO guild_data (guild_id, prefix, prefix_case_insensitive) VALUES ($3, $1, $2) '\
-                            'ON CONFLICT (guild_id) DO UPDATE SET prefix=EXCLUDED.prefix, prefix_case_insensitive=EXCLUDED.'\
-                                'prefix_case_insensitive;')
+                    async with conn.transaction():
+                        log.warn('get_prefix unable to get prefix from any existing data and function\nMessage ID: '
+                                '%s, Author ID: %s, Guild ID: %s', message.id, message.author.id, message.guild.id)
+                        await conn.execute('INSERT INTO guild_data (guild_id, prefix, prefix_case_insensitive) VALUES '
+                                            '($3, $1, $2) ON CONFLICT (guild_id) DO UPDATE SET prefix=EXCLUDED.prefix,'
+                                            ' prefix_case_insensitive=EXCLUDED.prefix_case_insensitive;', default_prefix, True, message.guild.id)
                         return self._get_case_insensitive_prefixes(default_prefix)
 
-    def setup(self):
+    def setup(self) -> None:
         self.load_cogs()
 
     def load_cogs(self) -> None:
+        """Load the cogs and/or extensions"""
         try:
             if settings['startup']['load-cogs-on-startup'] is True:
                 for cog in os.listdir('./aperture/cogs'):
                     self.load_extension(f'aperture.cogs.{cog}')
                     print(f'+[COG] -- {cog}')
-                    log.debug(f'Add Cog `{cog}`')
+                    log.debug('Add Cog - %s', cog)
             else:
                 log.debug('Load cogs on startup is Disabled in Settings. Ignoring Cog Load Task')
                 print('Load cogs on startup is Disabled in Settings. Ignoring Cog Load Task')
         except KeyError:
             log.critical('Settings file is not configured properly')
             raise SettingsError
-            
+
         try:
             if settings['startup']['load-jishaku'] is True:
                 self.load_extension('jishaku')
-                log.debug('Add `Jishaku`')
+                log.debug('Add Jishaku')
             else:
                 log.debug('Load Jishaku on startup is Disabled in Settings. Ignoring loading Jishaku')
                 print('Load Jishaku on startup is Disabled in Settings. Ignoring loading Jishaku')
@@ -195,6 +206,7 @@ class Bot(commands.Bot):
         super().run(_token, reconnect=True)
 
     async def close(self) -> None:
+        # Gracefully shuts down the bot and close all sessions/pools.
         print('Shutting Down...')
         log.info('Received signal to close the Bot. Shutting Down...')
         await super().close()
@@ -210,8 +222,8 @@ class Bot(commands.Bot):
             pass
 
     async def on_connect(self) -> None:
-        print(f'Connected to Bot. Latency: {self.latency*1000:,.0f} ms')
-        log.debug(f'Connected to Bot. Latency: {self.latency*1000:,.0f} ms')
+        print(f'Connected to Bot. Latency: {round(self.latency*1000)} ms')
+        log.debug('Connected to Bot. Latency: %s ms', round(self.latency*1000))
 
     async def on_disconnect(self) -> None:
         print('Bot Disconnnected')
@@ -221,7 +233,10 @@ class Bot(commands.Bot):
         print('Bot is Ready')
         log.debug('Bot is Ready')
 
-    async def get_owner_info(self):
+    # discord.py does not fetch this data automatically unless set
+    # in the Bot constructor. So we need to do it manually.
+    async def get_owner_info(self) -> None:
+        """Method to get owner info for required functions."""
         _app_info = await self.application_info()
         if _app_info.team:
             self.owner_ids = [member.id for member in _app_info.team.members]
@@ -229,52 +244,86 @@ class Bot(commands.Bot):
             self.owner_id = _app_info.owner.id
 
     async def startup(self) -> None:
+        # Method to create pools/sessions gracefully after bot gets ready.
         await self.wait_until_ready()
         await self.get_owner_info()
         log.debug('Executing Startup function')
         log.debug('Creating aiohttp session')
         self.aiohttp_session = aiohttp.ClientSession()
 
-    async def on_command_error(self, ctx, exc) -> None:
-        if ctx.command.has_error_handler():
-            return
-        log.debug(f'Command {ctx.command.name} responded with error {exc}\nMessage ID: {ctx.message.id}, '\
-            f'Author ID: {ctx.author.id}, Guild ID: {ctx.guild.id}')
-        await error_handler(ctx, exc)
+    # We need to enable global error handler only when 'debug-mode' is set to false in settings
+    try:
+        if settings['debug-mode'] is False:
+            async def on_command_error(self, ctx, exc) -> None:
+                if ctx.command.has_error_handler():
+                    return
+                log.debug('Command %s responded with error %s\nMessage ID: %s, Author ID: %s, Guild ID: %s',
+                    ctx.command.name, exc, ctx.message.id, ctx.author.id, ctx.guild.id)
+                await error_handler(ctx, exc)
+        else:
+            pass
+    except KeyError:
+        raise SettingsError
+
+    async def wait_for(self, event: str, *, check: Optional[Callable[..., bool]]=None, timeout: Optional[float]=None) -> Any:
+        if event == 'reaction':
+            done, pending = await asyncio.wait([
+                self.wait_for('reaction_add', check=check, timeout=timeout),
+                self.wait_for('reaction_remove', check=check, timeout=timeout)
+            ], return_when=asyncio.FIRST_COMPLETED)
+
+            for task in pending:
+                task.cancel()
+            return done.pop().result()
+
+        else:
+            return await super().wait_for(event, check=check, timeout=timeout)
 
     async def process_commands(self, message: Message) -> None:
-        ctx = await self.get_context(message, cls=CustomContext)
+        ctx = await self.get_context(message, cls=CustomContext) # We Use Custom Context with added/modified methods.
         if ctx.command is None:
             return
         await self.invoke(ctx)
-        
+
     async def on_message(self, message: Message) -> None:
         if message.author.bot:
             return
         await self.process_commands(message)
 
     async def on_message_edit(self, before: Message, after: Message) -> None:
+        # Edits the bot's main on_message_edit event. Required for the bot to respond on message edits.
         if after.author.bot or before.content == after.content:
             return
-        if (after.edited_at - before.created_at).seconds > self._message_edit_timeout:
+        # We limit respond only when message is edited within message_edit_timeout seconds of sending it.
+        # Can be changed in Bot constructor (__init__).
+        if (after.edited_at - before.created_at).seconds > self.message_edit_timeout:
             return
         await self.process_commands(after)
 
     async def on_message_delete(self, message: Message) -> None:
+        # This allows the bot to delete messages sent by itself in case the invoker deletes it's message.
         if message.author.bot:
             return
         with suppress(Exception):
             bot_response: Message = self.old_responses[message.id]
             await bot_response.delete()
+            del self.old_responses[message.id]
 
-    async def on_command_completion(self, ctx):
+    async def on_command_completion(self, ctx) -> None:
+        # We don't need to overload our cache with every respond.
+        # So, just pop the message object stored after the timeout.
         with suppress(KeyError):
-            await asyncio.sleep(self._message_edit_timeout)
+            await asyncio.sleep(self.message_edit_timeout)
             self.old_responses.pop(ctx.message.id)
 
-    async def owner_only(self, ctx):
+    async def owner_only(self, ctx) -> bool:
+        """Method to check if the invoker is owner"""
         return ctx.author.id in [self.owner_id] + list(self.owner_ids)
 
 # TODO: Use eval check from settings
-# Improve error handler
-# Implement debug mode
+# TODO: Improve error handler
+# TODO: Implement debug mode
+# TODO: Fix **load raising `ExtensionNotLoaded` instead of `ExtensionNotFound` on random extension names
+# TODO: Check for making custom wait_for better
+# TODO: Kill all pending tasks on close()
+# TODO: Fix replying `timed out`/any other message on reference to deleted message
