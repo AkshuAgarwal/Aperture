@@ -1,3 +1,4 @@
 from .context import *
-from .error import error_handler
+from .embed import *
 from .emoji import *
+from .error import error_handler

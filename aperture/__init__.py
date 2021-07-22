@@ -30,11 +30,7 @@ import aiohttp
 import asyncpg
 import yaml
 from dotenv import load_dotenv
-from discord import (
-    Message,
-    Intents,
-    DMChannel,
-)
+from discord import Message, Intents, DMChannel
 from discord.ext import commands
 
 from aperture.core import CustomContext, error_handler
@@ -85,7 +81,7 @@ class Bot(commands.Bot):
         self.message_edit_timeout: int = 120
         self.old_responses: dict = {} # A variable dict storing all responses in cache to allow respond on edit/delete.
         self.prefixes: dict = {}
-
+        self.snipes: dict = {} # Used for snipe command.
 
         self.loop.create_task(self.startup())
         self.loop.run_until_complete(self.create_pool(self.loop))
@@ -162,7 +158,8 @@ class Bot(commands.Bot):
                                 '%s, Author ID: %s, Guild ID: %s', message.id, message.author.id, message.guild.id)
                         await conn.execute('INSERT INTO guild_data (guild_id, prefix, prefix_case_insensitive) VALUES '
                                             '($3, $1, $2) ON CONFLICT (guild_id) DO UPDATE SET prefix=EXCLUDED.prefix,'
-                                            ' prefix_case_insensitive=EXCLUDED.prefix_case_insensitive;', default_prefix, True, message.guild.id)
+                                            ' prefix_case_insensitive=EXCLUDED.prefix_case_insensitive;',
+                                            default_prefix, True, message.guild.id)
                         return self._get_case_insensitive_prefixes(default_prefix)
 
     def setup(self) -> None:
@@ -265,7 +262,9 @@ class Bot(commands.Bot):
     except KeyError:
         raise SettingsError
 
-    async def wait_for(self, event: str, *, check: Optional[Callable[..., bool]]=None, timeout: Optional[float]=None) -> Any:
+    async def wait_for(
+        self, event: str, *, check: Optional[Callable[..., bool]]=None, timeout: Optional[float]=None
+    ) -> Any:
         if event == 'reaction':
             done, pending = await asyncio.wait([
                 self.wait_for('reaction_add', check=check, timeout=timeout),
