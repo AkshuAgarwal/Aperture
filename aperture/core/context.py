@@ -22,7 +22,7 @@ from discord import Message
 from discord.ext import commands
 
 class CustomContext(commands.Context):
-    async def freply(
+    async def fsend(
         self,
         content=None,
         *,
@@ -36,8 +36,8 @@ class CustomContext(commands.Context):
         reference=None,
         mention_author=None,
         view=None,
-        embeds=[],
-        attachments=[],
+        embeds=None,
+        attachments=None,
         suppress=False
         ):
         """First response in every command must use this method to enable Message edit/delete response functionality"""
@@ -85,8 +85,8 @@ class CustomContext(commands.Context):
         allowed_mentions=None,
         mention_author=None,
         view=None,
-        embeds=[],
-        attachments=[],
+        embeds=None,
+        attachments=None,
         suppress=False
         ):
         """First response in every command must use this method to enable Message edit/delete response functionality"""
