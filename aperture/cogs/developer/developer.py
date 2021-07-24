@@ -50,7 +50,6 @@ extension_name: Name of the extension to be loaded. Extension names are delimite
         usage='[extension_name:str, default=all]'
     )
     @commands.is_owner()
-    @commands.bot_has_permissions(send_messages=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def _load(self, ctx, *, extensions_name: str = None) -> Message:
         view = ConfirmationView(ctx, timeout=30.0)
@@ -108,7 +107,6 @@ extension_name: Name of the extension to be unloaded. Extension names are delimi
         usage='[extension_name:str, default=all]'
     )
     @commands.is_owner()
-    @commands.bot_has_permissions(send_messages=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def _unload(self, ctx, *, extensions_name: str = None) -> Message:
         view = ConfirmationView(ctx, timeout=30.0)
@@ -167,7 +165,6 @@ extension_name: Name of the extension to be reloaded. Extension names are delimi
         usage='[extension_name:str, default=all]'
     )
     @commands.is_owner()
-    @commands.bot_has_permissions(send_messages=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def _reload(self, ctx, *, extensions_name: str = None) -> Message:
         view = ConfirmationView(ctx, timeout=30.0)
