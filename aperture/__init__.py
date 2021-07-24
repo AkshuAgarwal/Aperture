@@ -30,7 +30,14 @@ import aiohttp
 import asyncpg
 import yaml
 from dotenv import load_dotenv
-from discord import Message, Intents, DMChannel
+
+from discord import (
+    DMChannel,
+    Intents,
+    Member,
+    Message,
+    Permissions,
+)
 from discord.ext import commands
 
 from aperture.core import CustomContext, error_handler
@@ -282,6 +289,25 @@ class Bot(commands.Bot):
         ctx = await self.get_context(message, cls=CustomContext) # We Use Custom Context with added/modified methods.
         if ctx.command is None:
             return
+        if isinstance(ctx.me, Member):
+            # This checks if the bot has minimum permissions in the guild to be able to be operated there
+            p: Permissions = ctx.me.guild_permissions
+            if not all([
+                p.add_reactions,
+                p.embed_links,
+                p.read_message_history,
+                p.send_messages,
+                p.use_external_emojis,
+                p.view_channel,
+            ]):
+                with suppress(Exception):
+                    # We also need to handle the case where the bot don't have send_messages permission to 
+                    # send the error. So, just suppress that.
+                    return await ctx.reply(
+                        "I'm Missing minimum permissions I require to be operated in a Guild.\n"
+                        "> Permissions I require: `Add reactions, Embed Links, Read message history, Send messages, "
+                        "Use external emojis, View channel`\nMake sure I atleast have these permissions!"
+                    )
         await self.invoke(ctx)
 
     async def on_message(self, message: Message) -> None:
@@ -318,6 +344,7 @@ class Bot(commands.Bot):
     async def owner_only(self, ctx) -> bool:
         """Method to check if the invoker is owner"""
         return ctx.author.id in [self.owner_id] + list(self.owner_ids)
+
 
 # TODO: Use eval check from settings
 # TODO: Improve error handler
