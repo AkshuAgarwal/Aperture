@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, Union
+from typing import Union
 
 from discord import Colour, Embed
 from discord.embeds import _EmptyEmbed, EmptyEmbed
