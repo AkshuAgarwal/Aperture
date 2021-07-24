@@ -73,6 +73,8 @@ async def error_handler(ctx, error):
         await ctx.reply(f'Emoji does not match the correct format!\n> Arguments passed: `{error.argument}`')
     elif isinstance(error, BadBoolArgument):
         await ctx.reply(f'Boolean Argument does not match the valid format!\n> Arguments passed: `{error.argument}`')
+    elif isinstance(error, ThreadNotFound):
+        await ctx.reply(f'Unable to find Thread Channel!\n> Argument Passed: `{error.argument}`')
     elif isinstance(error, BadFlagArgument):
         await ctx.reply('Flag failed tO convert a value!')
     elif isinstance(error, MissingFlagArgument):
@@ -85,6 +87,8 @@ async def error_handler(ctx, error):
         await ctx.send(f'Passed Invalid Value in Literal!\n> Parameter Failed: {error.param}\n> Valid Literals: `{", ".join(i for i in error.literals)}`')
     elif isinstance(error, BadUnionArgument):
         await ctx.reply(f'Invaild Inupt type passed in Arguments!\n> Parameter failed: {error.param}\n> Valid Input Types: {", ".join(i for i in error.converters)}\nNeed more info? Use `{ctx.prefix}help {ctx.invoked_with}`')
+    elif isinstance(error, BadLiteralArgument):
+        await ctx.reply(f'Invalid Literal Argument passed.\n> Failed Parameter: `{error.param}`\n> Valid Literals: `{", ".join(i for i in error.literals)}`')
     elif isinstance(error, UnexpectedQuoteError):
         await ctx.reply(f'Found Unexpected Quote mark inside non-quoted string!\n Quote: `{error.quote}`')
     elif isinstance(error, InvalidEndOfQuotedStringError):
@@ -94,7 +98,7 @@ async def error_handler(ctx, error):
     elif isinstance(error, CheckFailure) and 'global check' in str(error):
         await ctx.reply('The Bot is currently running in owner-only mode.')
     elif isinstance(error, CheckAnyFailure):
-        pass
+        await ctx.reply(f'All Checks failed! You cannot use this Command.')
     elif isinstance(error, PrivateMessageOnly):
         await ctx.reply('This command or an Operation in this command works in Private Messages (DMs) only!')
     elif isinstance(error, NoPrivateMessage):
@@ -121,7 +125,7 @@ async def error_handler(ctx, error):
     elif isinstance(error, CommandInvokeError):
         await ctx.reply(f'Oops! Some error occured while invoking the command!\n> Error: `{error.__cause__}`')
     elif isinstance(error, CommandOnCooldown):
-        await ctx.reply(f'Woah! Looks like you\'re in hurry! This command is on `{error.cooldown.type}` type Cooldown! Try again in `{error.retry_after:,.0f}` seconds.')
+        await ctx.reply(f'Woah! Looks like you\'re in hurry! This command is on `{str(error.type)[11:]}` type Cooldown! Try again in `{error.retry_after:,.0f}` seconds.')
     elif isinstance(error, MaxConcurrencyReached):
         await ctx.reply(f'Woah! Looks like this command is being used a lot...\nThe command reached it\'s Max Concurrency of `{error.number}` invokers per `{error.per}`. Try again in a few seconds...')
     elif isinstance(error, ExtensionAlreadyLoaded):
