@@ -107,9 +107,9 @@ async def error_handler(ctx, error):
     elif isinstance(error, NotOwner):
         await ctx.reply('This is a **Developer Only** Command!')
     elif isinstance(error, MissingPermissions):
-        await ctx.reply(f'You are Missing Permissions to use this Command!\n> Missing Permissions: `{", ".join(str(i).replace("_", " ").capitalize() for i in error.missing_perms)}`\nNeed more info? Use `{ctx.prefix}help {ctx.invoked_with}`')
+        await ctx.reply(f'You are Missing Permissions to use this Command!\n> Missing Permissions: `{", ".join(str(i).replace("_", " ").capitalize() for i in error.missing_permissions)}`\nNeed more info? Use `{ctx.prefix}help {ctx.invoked_with}`')
     elif isinstance(error, BotMissingPermissions):
-        await ctx.reply(f'I am Missing Permissions to execute this Command!\n> Missing Permissions: `{", ".join(str(i).replace("_", " ").capitalize() for i in error.missing_perms)}`\nNeed more info? Use `{ctx.prefix}help {ctx.invoked_with}`')
+        await ctx.reply(f'I am Missing Permissions to execute this Command!\n> Missing Permissions: `{", ".join(str(i).replace("_", " ").capitalize() for i in error.missing_permissions)}`\nNeed more info? Use `{ctx.prefix}help {ctx.invoked_with}`')
     elif isinstance(error, MissingRole):
         await ctx.reply(f'You are Missing required Role to use this Command!\n> Missing Role Parameter: `{error.missing_role}`\nNeed more info? Use `{ctx.prefix}help {ctx.invoked_with}`')
     elif isinstance(error, BotMissingRole):
