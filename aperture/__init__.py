@@ -33,6 +33,7 @@ from dotenv import load_dotenv
 
 from discord import (
     DMChannel,
+    Guild,
     Intents,
     Member,
     Message,
@@ -59,7 +60,7 @@ with open('./logging.yaml', 'r', encoding='UTF-8') as stream:
 # Load the settings file.
 with open('./settings.yaml', 'r', encoding='utf-8') as file:
     settings = yaml.load(file, Loader=yaml.FullLoader)
-    log.debug('Load settings file')
+    log.info('Loaded settings file')
 
 load_dotenv('./.env')
 
@@ -117,6 +118,7 @@ class Bot(commands.Bot):
         log.info('Created Database Pool')
         return self.pool
 
+
     @staticmethod
     def _get_case_insensitive_prefixes(prefix: str) -> List[str]:
         """Return a list of prefix in different Case"""
@@ -161,13 +163,14 @@ class Bot(commands.Bot):
             except KeyError:
                 async with self.pool.acquire() as conn:
                     async with conn.transaction():
-                        log.warn('get_prefix unable to get prefix from any existing data and function\nMessage ID: '
-                                '%s, Author ID: %s, Guild ID: %s', message.id, message.author.id, message.guild.id)
                         await conn.execute('INSERT INTO guild_data (guild_id, prefix, prefix_case_insensitive) VALUES '
                                             '($3, $1, $2) ON CONFLICT (guild_id) DO UPDATE SET prefix=EXCLUDED.prefix,'
                                             ' prefix_case_insensitive=EXCLUDED.prefix_case_insensitive;',
                                             default_prefix, True, message.guild.id)
+                        log.warn('get_prefix unable to get prefix from any existing data and function\nMessage ID: '
+                                '%s, Author ID: %s, Channel ID: %s, Guild ID: %s', message.id, message.author.id, message.channel.id, message.guild.id)
                         return self._get_case_insensitive_prefixes(default_prefix)
+
 
     def setup(self) -> None:
         self.load_cogs()
@@ -214,7 +217,7 @@ class Bot(commands.Bot):
         print('Shutting Down...')
         log.info('Received signal to close the Bot. Shutting Down...')
         await super().close()
-        log.debug('Closed the Bot connection successfully')
+        log.info('Closed the Bot connection successfully')
 
         try:
             await self.aiohttp_session.close()
@@ -224,6 +227,7 @@ class Bot(commands.Bot):
             log.debug('Closed Database connection')
         except AttributeError:
             pass
+
 
     async def on_connect(self) -> None:
         print(f'Connected to Bot. Latency: {round(self.latency*1000)} ms')
@@ -237,6 +241,15 @@ class Bot(commands.Bot):
         print('Bot is Ready')
         log.debug('Bot is Ready')
 
+    async def startup(self) -> None:
+        # Method to create pools/sessions gracefully after bot gets ready.
+        await self.wait_until_ready()
+        await self.get_owner_info()
+        log.debug('Executing Startup function')
+        log.debug('Creating aiohttp session')
+        self.aiohttp_session = aiohttp.ClientSession()
+
+
     # discord.py does not fetch this data automatically unless set
     # in the Bot constructor. So we need to do it manually.
     async def get_owner_info(self) -> None:
@@ -247,14 +260,6 @@ class Bot(commands.Bot):
         else:
             self.owner_id = _app_info.owner.id
 
-    async def startup(self) -> None:
-        # Method to create pools/sessions gracefully after bot gets ready.
-        await self.wait_until_ready()
-        await self.get_owner_info()
-        log.debug('Executing Startup function')
-        log.debug('Creating aiohttp session')
-        self.aiohttp_session = aiohttp.ClientSession()
-
     # We need to enable global error handler only when 'debug-mode' is set to false in settings
     try:
         if settings['debug-mode'] is False:
@@ -264,8 +269,6 @@ class Bot(commands.Bot):
                 log.debug('Command %s responded with error %s\nMessage ID: %s, Author ID: %s, Guild ID: %s',
                     ctx.command.name, exc, ctx.message.id, ctx.author.id, ctx.guild.id)
                 await error_handler(ctx, exc)
-        else:
-            pass
     except KeyError:
         raise SettingsError
 
@@ -284,6 +287,7 @@ class Bot(commands.Bot):
 
         else:
             return await super().wait_for(event, check=check, timeout=timeout)
+
 
     async def process_commands(self, message: Message) -> None:
         ctx = await self.get_context(message, cls=CustomContext) # We Use Custom Context with added/modified methods.
@@ -309,6 +313,7 @@ class Bot(commands.Bot):
                         "Use external emojis, View channel`\nMake sure I atleast have these permissions!"
                     )
         await self.invoke(ctx)
+
 
     async def on_message(self, message: Message) -> None:
         if message.author.bot:
@@ -340,6 +345,25 @@ class Bot(commands.Bot):
         with suppress(KeyError):
             await asyncio.sleep(self.message_edit_timeout)
             self.old_responses.pop(ctx.message.id)
+
+    async def on_guild_join(self, guild: Guild) -> None:
+        try:
+            default_prefix = settings['bot']['default-prefix'] or 'ap!'
+        except KeyError:
+            log.critical('Settings file is not configured properly')
+            raise SettingsError
+
+        async with self.pool.acquire() as conn:
+            async with conn.transaction():
+                await conn.execute('INSERT INTO guild_data (guild_id, prefix, prefix_case_insensitive) VALUES '
+                                    '($3, $1, $2) ON CONFLICT (guild_id) DO NOTHING;',
+                                    default_prefix, True, guild.id)
+
+    async def on_guild_remove(self, guild: Guild) -> None:
+        async with self.pool.acquire() as conn:
+            async with conn.transaction():
+                await conn.execute('DELETE FROM guild_data WHERE guild_id = $1;', guild.id)
+
 
     async def owner_only(self, ctx) -> bool:
         """Method to check if the invoker is owner"""
