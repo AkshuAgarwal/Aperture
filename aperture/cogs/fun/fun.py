@@ -24,7 +24,7 @@ from aperture.core import CustomEmbed
 class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.description = """Fun commands are some basic mini-games users can play."""
+        self.description = """Some basic mini-games/fun commands to play with"""
 
 
     @commands.Cog.listener()

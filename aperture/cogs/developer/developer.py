@@ -35,8 +35,7 @@ class Developer(commands.Cog):
     
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.description = """Developer commands are the commands which are restricted to be used by Developer (Bot Owner) only.
-These are used to manage the bot and data and are not meant to be used by anyone else."""
+        self.description = 'Bot Owner (Developer) only Commands!'
 
 
     @commands.command(

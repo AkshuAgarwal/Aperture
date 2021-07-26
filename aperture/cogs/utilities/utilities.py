@@ -27,7 +27,7 @@ from aperture.core import CustomEmbed
 class Utilities(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.description = """Utilities commands are some basic/general usage commands."""
+        self.description = """Basic/general usage commands."""
 
     @commands.command(
         name='avatar',
