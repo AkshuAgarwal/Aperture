@@ -21,7 +21,7 @@ import sys
 import traceback
 from contextlib import suppress
 
-from discord import InteractionResponded
+from discord import InteractionResponded, HTTPException
 from discord.ext.commands import *
 
 
@@ -145,6 +145,7 @@ async def error_handler(ctx, error):
         await ctx.reply('Timed out waiting for response...')
         
     else:
-        await ctx.reply(f'Oops! Some error Occured...\n> Error: `{error}`')
+        with suppress(HTTPException): # Sometimes error is raised without any reference to message and raises unexpected HTTPException. So, just suppress that
+            await ctx.reply(f'Oops! Some error Occured...\n> Error: `{error}`')
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
