@@ -21,6 +21,7 @@ from discord.ext import commands
 
 from aperture.core import CustomEmbed
 
+
 class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import datetime
-from typing import Union
+from typing import Optional, Union
 
 from discord import Colour, Embed
 from discord.embeds import _EmptyEmbed, EmptyEmbed
@@ -51,7 +51,7 @@ class CustomEmbed(Embed):
         type = 'rich',
         url = EmptyEmbed,
         description = EmptyEmbed,
-        timestamp: datetime.datetime = None,
+        timestamp: Optional[datetime.datetime] = None,
     ) -> Embed:
         if color is EmptyEmbed and colour is EmptyEmbed:
             _color = 0x0CE6F5
@@ -60,13 +60,15 @@ class CustomEmbed(Embed):
         else:
             _color = color if color is not EmptyEmbed else colour
 
+        _timestamp = timestamp or datetime.datetime.now()
+
         _embed = cls(
             color=_color,
             title=title,
             type=type,
             url=url,
             description=description,
-            timestamp=datetime.datetime.now()
+            timestamp=_timestamp
         )
         _embed.set_author(name=context.author, icon_url=context.author.avatar.url)
         _embed.set_footer(text=f'Thanks for using {context.me.name}', icon_url=context.me.avatar.url)

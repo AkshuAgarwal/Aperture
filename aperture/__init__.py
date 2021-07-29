@@ -167,8 +167,10 @@ class Bot(commands.Bot):
                                             '($3, $1, $2) ON CONFLICT (guild_id) DO UPDATE SET prefix=EXCLUDED.prefix,'
                                             ' prefix_case_insensitive=EXCLUDED.prefix_case_insensitive;',
                                             default_prefix, True, message.guild.id)
-                        log.warn('get_prefix unable to get prefix from any existing data and function\nMessage ID: '
-                                '%s, Author ID: %s, Channel ID: %s, Guild ID: %s', message.id, message.author.id, message.channel.id, message.guild.id)
+                        log.warn(
+                            'get_prefix unable to get prefix from any existing data and function\n'
+                            'Message ID: %s, Author ID: %s, Channel ID: %s, Guild ID: %s',
+                            message.id, message.author.id, message.channel.id, message.guild.id)
                         return self._get_case_insensitive_prefixes(default_prefix)
 
 
@@ -305,7 +307,7 @@ class Bot(commands.Bot):
                 p.view_channel,
             ]):
                 with suppress(Exception):
-                    # We also need to handle the case where the bot don't have send_messages permission to 
+                    # We also need to handle the case where the bot don't have send_messages permission to
                     # send the error. So, just suppress that.
                     return await ctx.reply(
                         "I'm Missing minimum permissions I require to be operated in a Guild.\n"
@@ -377,3 +379,4 @@ class Bot(commands.Bot):
 # TODO: Check for making custom wait_for better
 # TODO: Kill all pending tasks on close()
 # TODO: Fix replying `timed out`/any other message on reference to deleted message
+# TODO: Reset cooldown if command raised error during invoke

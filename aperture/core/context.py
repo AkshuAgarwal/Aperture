@@ -71,7 +71,7 @@ class CustomContext(commands.Context):
             )
             self.bot.old_responses[self.message.id] = response
             return response
-            
+
     async def freply(
         self,
         content=None,
@@ -95,7 +95,7 @@ class CustomContext(commands.Context):
             with _suppress(Exception):
                 await response.clear_reactions()
             return await response.edit(
-                content=content, 
+                content=content,
                 embed=embed,
                 attachments=attachments,
                 suppress=suppress,
