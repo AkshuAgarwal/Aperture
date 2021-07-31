@@ -140,7 +140,7 @@ class TicTacToeView(View):
         self._players: List[Member] = [value for _, value in self._players.items() if value != self.cur_player[1]]
         for child in self.children:
             child.disabled = True
-        await self._response.edit(content=f':alarm_clock: {self.cur_player[1].mention} timed out responding... Therefore, {self._players[0].mention} Won! :tada:', view=self)
+        await self._response.edit(content=f':alarm_clock: {self.cur_player[1].mention} timed out responding...\nTherefore, {self._players[0].mention} Won! :tada:', view=self)
 
 
 class RequestToPlayView(View):
