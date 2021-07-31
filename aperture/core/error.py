@@ -20,6 +20,7 @@ import asyncio
 import sys
 import traceback
 from contextlib import suppress
+from typing import List
 
 from discord import InteractionResponded, HTTPException
 from discord.ext.commands import *
@@ -38,6 +39,16 @@ class SettingsError(ApertureError):
             args = (default_message, )
         
         super().__init__(*args, **kwargs)
+
+class ConflictingArguments(BadArgument):
+    def __init__(self, conflicting_args: List[str], *args, **kwargs):
+        _response = f'Cannot set {", ".join(i for i in conflicting_args)} all together'
+        super().__init__(_response, *args, **kwargs)
+
+class MissingAllArguments(BadArgument):
+    def __init__(self, missing_args: List[str], *args, **kwargs):
+        _response = f'Missing all arguments. You need to pass atleast one of {", ".join(i for i in missing_args)}'
+        super().__init__(_response, *args, **kwargs)
 
 
 async def error_handler(ctx, error):
