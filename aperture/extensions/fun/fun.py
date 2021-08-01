@@ -43,7 +43,7 @@ class Fun(commands.Cog):
 It is possible that it can return None in case the message is not found in the bot's cache.
 The command only returns messages with some content and will not save if the content is None (i.e., the message has no content and instead have a attachment and/or embeds""",
     )
-    @commands.bot_has_permissions(send_messages=True, read_message_history=True)
+    @commands.guild_only()
     @commands.cooldown(1, 10, commands.BucketType.channel)
     async def snipe(self, ctx) -> Message:
         try:
