@@ -175,19 +175,19 @@ class Bot(commands.Bot):
 
 
     def setup(self) -> None:
-        self.load_cogs()
+        self.load_extensions()
 
-    def load_cogs(self) -> None:
-        """Load the cogs and/or extensions"""
+    def load_extensions(self) -> None:
+        """Load the extensions"""
         try:
-            if settings['startup']['load-cogs-on-startup'] is True:
-                for cog in os.listdir('./aperture/cogs'):
-                    self.load_extension(f'aperture.cogs.{cog}')
-                    print(f'+[COG] -- {cog}')
-                    log.debug('Add Cog - %s', cog)
+            if settings['startup']['load-extensions-on-startup'] is True:
+                for ext in os.listdir('./aperture/extensions'):
+                    self.load_extension(f'aperture.extensions.{ext}')
+                    print(f'+[EXTENSION] -- {ext}')
+                    log.debug('Add Extension - %s', ext)
             else:
-                log.debug('Load cogs on startup is Disabled in Settings. Ignoring Cog Load Task')
-                print('Load cogs on startup is Disabled in Settings. Ignoring Cog Load Task')
+                log.debug('Load extensions on startup is Disabled in Settings. Ignoring Extension load Task')
+                print('Load extensions on startup is Disabled in Settings. Ignoring Extension load Task')
         except KeyError:
             log.critical('Settings file is not configured properly')
             raise SettingsError
@@ -221,14 +221,12 @@ class Bot(commands.Bot):
         await super().close()
         log.info('Closed the Bot connection successfully')
 
-        try:
+        with suppress(AttributeError):
             await self.aiohttp_session.close()
             log.debug('Closed aiohttp session')
 
             await self.pool.close()
             log.debug('Closed Database connection')
-        except AttributeError:
-            pass
 
 
     async def on_connect(self) -> None:
@@ -342,7 +340,7 @@ class Bot(commands.Bot):
             del self.old_responses[message.id]
 
     async def on_command_completion(self, ctx) -> None:
-        # We don't need to overload our cache with every respond.
+        # We don't need to overload our cache with every response.
         # So, just pop the message object stored after the timeout.
         with suppress(KeyError):
             await asyncio.sleep(self.message_edit_timeout)
@@ -357,8 +355,8 @@ class Bot(commands.Bot):
 
         async with self.pool.acquire() as conn:
             async with conn.transaction():
-                await conn.execute('INSERT INTO guild_data (guild_id, prefix, prefix_case_insensitive) VALUES '
-                                    '($3, $1, $2) ON CONFLICT (guild_id) DO NOTHING;',
+                await conn.execute('INSERT INTO guild_data (guild_id, prefix, prefix_case_insensitive)'
+                                    ' VALUES ($3, $1, $2) ON CONFLICT (guild_id) DO NOTHING;',
                                     default_prefix, True, guild.id)
 
     async def on_guild_remove(self, guild: Guild) -> None:
@@ -370,13 +368,3 @@ class Bot(commands.Bot):
     async def owner_only(self, ctx) -> bool:
         """Method to check if the invoker is owner"""
         return ctx.author.id in [self.owner_id] + list(self.owner_ids)
-
-
-# TODO: Use eval check from settings
-# TODO: Improve error handler
-# TODO: Implement debug mode
-# TODO: Fix **load raising `ExtensionNotLoaded` instead of `ExtensionNotFound` on random extension names
-# TODO: Check for making custom wait_for better
-# TODO: Kill all pending tasks on close()
-# TODO: Fix replying `timed out`/any other message on reference to deleted message
-# TODO: Reset cooldown if command raised error during invoke

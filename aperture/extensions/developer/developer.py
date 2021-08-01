@@ -16,9 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import asyncio
 import os
+import asyncio
 import logging
+from contextlib import suppress
 from typing import List
 
 from discord import Message
@@ -63,12 +64,10 @@ extension_name: Name of the extension to be loaded. Extension names are delimite
             pass
 
         if not extensions_name or extensions_name=="--all":
-            for ext in os.listdir('./aperture/cogs'):
-                try:
-                    self.bot.load_extension(f'aperture.cogs.{ext}')
+            for ext in os.listdir('./aperture/extensions'):
+                with suppress(commands.ExtensionAlreadyLoaded):
+                    self.bot.load_extension(f'aperture.extensions.{ext}')
                     log.debug(f'loaded {ext} on command.')
-                except commands.ExtensionAlreadyLoaded:
-                    pass
             return await _response.edit(content=f'{emoji.greenTick} Loaded all unloaded Extensions', view=view)
         else:
             _extensions = extensions_name.split()
@@ -76,7 +75,7 @@ extension_name: Name of the extension to be loaded. Extension names are delimite
             _failed_extensions = {}
             for ext in _extensions:
                 try:
-                    self.bot.load_extension(f'aperture.cogs.{ext}')
+                    self.bot.load_extension(f'aperture.extensions.{ext}')
                     log.debug(f'loaded {ext} on command.')
                     _loaded_extensions.append(ext)
                 except commands.ExtensionError as exc:
@@ -102,7 +101,7 @@ extension_name: Name of the extension to be loaded. Extension names are delimite
         help=f"""The Extension should be a Python File Only with valid Extension syntax and should already be loaded.
 The Extension should be in the Proper directory in the bot's code as set by the Developer.
 
-extension_name: Name of the extension to be unloaded. Extension names are delimited by Spaces. Leave it blank or use `--all` to unload all loaded extensions (`{'`, `'.join(i for i in _unload_restricted)}` cog can only be unloaded by manually giving it as input).""",
+extension_name: Name of the extension to be unloaded. Extension names are delimited by Spaces. Leave it blank or use `--all` to unload all loaded extensions (`{'`, `'.join(i for i in _unload_restricted)}` extension(s) can only be unloaded by manually giving it as input).""",
         usage='[extension_name:str, default=all]'
     )
     @commands.is_owner()
@@ -120,13 +119,11 @@ extension_name: Name of the extension to be unloaded. Extension names are delimi
             pass
 
         if not extensions_name or extensions_name=="--all":
-            for ext in os.listdir('./aperture/cogs'):
+            for ext in os.listdir('./aperture/extensions'):
                 if ext not in Developer._unload_restricted:
-                    try:
-                        self.bot.unload_extension(f'aperture.cogs.{ext}')
+                    with suppress(commands.ExtensionAlreadyLoaded):
+                        self.bot.unload_extension(f'aperture.extensions.{ext}')
                         log.debug(f'unloaded {ext} on command.')
-                    except commands.ExtensionNotLoaded:
-                        pass
             return await _response.edit(content=f'{emoji.greenTick} Unloaded all loaded Extensions', view=view)
         else:
             _extensions = extensions_name.split()
@@ -134,7 +131,7 @@ extension_name: Name of the extension to be unloaded. Extension names are delimi
             _failed_extensions = {}
             for ext in _extensions:
                 try:
-                    self.bot.unload_extension(f'aperture.cogs.{ext}')
+                    self.bot.unload_extension(f'aperture.extensions.{ext}')
                     log.debug(f'unloaded {ext} on command.')
                     _unloaded_extensions.append(ext)
                 except commands.ExtensionError as exc:
@@ -178,12 +175,10 @@ extension_name: Name of the extension to be reloaded. Extension names are delimi
             pass
 
         if not extensions_name or extensions_name=="--all":
-            for ext in os.listdir('./aperture/cogs'):
-                try:
-                    self.bot.reload_extension(f'aperture.cogs.{ext}')
+            for ext in os.listdir('./aperture/extensions'):
+                with suppress(commands.ExtensionAlreadyLoaded):
+                    self.bot.reload_extension(f'aperture.extensions.{ext}')
                     log.debug(f'reloaded {ext} on command.')
-                except commands.ExtensionNotLoaded:
-                    pass
             return await _response.edit(content=f'{emoji.greenTick} Reloaded all loaded Extensions', view=view)
         else:
             _extensions = extensions_name.split()
@@ -191,7 +186,7 @@ extension_name: Name of the extension to be reloaded. Extension names are delimi
             _failed_extensions = {}
             for ext in _extensions:
                 try:
-                    self.bot.reload_extension(f'aperture.cogs.{ext}')
+                    self.bot.reload_extension(f'aperture.extensions.{ext}')
                     log.debug(f'reloaded {ext} on command.')
                     _reloaded_extensions.append(ext)
                 except commands.ExtensionError as exc:
