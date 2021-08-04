@@ -22,8 +22,15 @@ import traceback
 from contextlib import suppress
 from typing import List
 
-from discord import InteractionResponded, HTTPException
+from discord import (
+    HTTPException,
+    Interaction,
+    InteractionResponded,
+    NotFound
+)
 from discord.ext.commands import *
+
+from aperture.core.context import CustomContext
 
 
 class ApertureError(Exception):
@@ -49,6 +56,15 @@ class MissingAllArguments(BadArgument):
     def __init__(self, missing_args: List[str], *args, **kwargs):
         _response = f'Missing all arguments. You need to pass atleast one of {", ".join(i for i in missing_args)}'
         super().__init__(_response, *args, **kwargs)
+
+class TimeoutError(ApertureError):
+    def __init__(self, *args, **kwargs):
+        default_message = 'Timed out waiting for Response...'
+
+        if not args:
+            args = (default_message, )
+        
+        super().__init__(*args, **kwargs)
 
 
 async def error_handler(ctx, error):
@@ -154,9 +170,18 @@ async def error_handler(ctx, error):
 
     elif isinstance(error, asyncio.exceptions.TimeoutError):
         await ctx.reply('Timed out waiting for response...')
+    elif isinstance(error, TimeoutError):
+        await ctx.reply(error.args[0])
         
     else:
         with suppress(HTTPException): # Sometimes error is raised without any reference to message and raises unexpected HTTPException. So, just suppress that
             await ctx.reply(f'Oops! Some error Occured...\n> Error: `{error}`')
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+
+
+async def view_error_handler(error, _, interaction: Interaction):
+    if isinstance(error, NotFound) and error.code == 10062 and error.text == 'Unknown Interaction':
+        return
+    ctx = Bot.get_context(interaction.message, cls=CustomContext)
+    await error_handler(ctx, error)
