@@ -47,17 +47,14 @@ from aperture.core.error import SettingsError
 
 log = logging.getLogger(__name__)
 
-# Creates a directory, requrired for logs.
 if not os.path.exists('./tmp'):
     os.makedirs('./tmp')
     print('Created directory "tmp" in the project root directory')
 
-# Load the logging configuration.
 with open('./logging.yaml', 'r', encoding='UTF-8') as stream:
     log_config = yaml.load(stream, Loader=yaml.FullLoader)
     logging.config.dictConfig(log_config)
 
-# Load the settings file.
 with open('./settings.yaml', 'r', encoding='utf-8') as file:
     settings = yaml.load(file, Loader=yaml.FullLoader)
     log.info('Loaded settings file')
@@ -80,21 +77,19 @@ class Bot(commands.Bot):
             strip_after_prefix=True,
         )
 
-        # Create some required variables and constants
         self.ready: bool = False
         self.aiohttp_session: Optional[aiohttp.ClientSession] = None
         self.pool: Optional[asyncpg.Pool] = None
 
         self.launch_time = datetime.utcnow()
         self.message_edit_timeout: int = 120
-        self.old_responses: dict = {} # A variable dict storing all responses in cache to allow respond on edit/delete.
+        self.old_responses: dict = {}
         self.prefixes: dict = {}
-        self.snipes: dict = {} # Used for snipe command.
+        self.snipes: dict = {}
 
         self.loop.create_task(self.startup())
         self.loop.run_until_complete(self.create_pool(self.loop))
 
-        # Add owner-only check on the bot if enabled in settings
         try:
             if settings['bot']['owner-only'] is True:
                 self.add_check(self.owner_only)
@@ -134,7 +129,6 @@ class Bot(commands.Bot):
         )
 
     async def get_prefix(self, message: Message) -> Union[List[str], str]:
-        # Modified Library's internal method to get prefix for the message context
         try:
             default_prefix = settings['bot']['default-prefix'] or 'ap!'
         except KeyError:
@@ -215,7 +209,6 @@ class Bot(commands.Bot):
         super().run(_token, reconnect=True)
 
     async def close(self) -> None:
-        # Gracefully shuts down the bot and close all sessions/pools.
         print('Shutting Down...')
         log.info('Received signal to close the Bot. Shutting Down...')
         await super().close()
@@ -242,16 +235,12 @@ class Bot(commands.Bot):
         log.debug('Bot is Ready')
 
     async def startup(self) -> None:
-        # Method to create pools/sessions gracefully after bot gets ready.
         await self.wait_until_ready()
         await self.get_owner_info()
         log.debug('Executing Startup function')
         log.debug('Creating aiohttp session')
         self.aiohttp_session = aiohttp.ClientSession()
 
-
-    # discord.py does not fetch this data automatically unless set
-    # in the Bot constructor. So we need to do it manually.
     async def get_owner_info(self) -> None:
         """Method to get owner info for required functions."""
         _app_info = await self.application_info()
@@ -260,17 +249,12 @@ class Bot(commands.Bot):
         else:
             self.owner_id = _app_info.owner.id
 
-    # We need to enable global error handler only when 'debug-mode' is set to false in settings
-    try:
-        if settings['debug-mode'] is False:
-            async def on_command_error(self, ctx, exc) -> None:
-                if ctx.command.has_error_handler():
-                    return
-                log.debug('Command %s responded with error %s\nMessage ID: %s, Author ID: %s, Guild ID: %s',
-                    ctx.command.name, exc, ctx.message.id, ctx.author.id, ctx.guild.id)
-                await error_handler(ctx, exc)
-    except KeyError:
-        raise SettingsError
+    async def on_command_error(self, ctx, exc) -> None:
+        if ctx.command.has_error_handler():
+            return
+        log.debug('Command %s responded with error %s\nMessage ID: %s, Author ID: %s, Guild ID: %s',
+            ctx.command.name, exc, ctx.message.id, ctx.author.id, ctx.guild.id)
+        await error_handler(ctx, exc)
 
     async def wait_for(
         self, event: str, *, check: Optional[Callable[..., bool]]=None, timeout: Optional[float]=None
@@ -290,11 +274,10 @@ class Bot(commands.Bot):
 
 
     async def process_commands(self, message: Message) -> None:
-        ctx = await self.get_context(message, cls=CustomContext) # We Use Custom Context with added/modified methods.
+        ctx = await self.get_context(message, cls=CustomContext)
         if ctx.command is None:
             return
         if isinstance(ctx.me, Member):
-            # This checks if the bot has minimum permissions in the guild to be able to be operated there
             p: Permissions = ctx.me.guild_permissions
             if not all([
                 p.add_reactions,
@@ -305,8 +288,6 @@ class Bot(commands.Bot):
                 p.view_channel,
             ]):
                 with suppress(Exception):
-                    # We also need to handle the case where the bot don't have send_messages permission to
-                    # send the error. So, just suppress that.
                     return await ctx.reply(
                         "I'm Missing minimum permissions I require to be operated in a Guild.\n"
                         "> Permissions I require: `Add reactions, Embed Links, Read message history, Send messages, "
@@ -321,17 +302,13 @@ class Bot(commands.Bot):
         await self.process_commands(message)
 
     async def on_message_edit(self, before: Message, after: Message) -> None:
-        # Edits the bot's main on_message_edit event. Required for the bot to respond on message edits.
         if after.author.bot or before.content == after.content:
             return
-        # We limit respond only when message is edited within message_edit_timeout seconds of sending it.
-        # Can be changed in Bot constructor (__init__).
         if (after.edited_at - before.created_at).seconds > self.message_edit_timeout:
             return
         await self.process_commands(after)
 
     async def on_message_delete(self, message: Message) -> None:
-        # This allows the bot to delete messages sent by itself in case the invoker deletes it's message.
         if message.author.bot:
             return
         with suppress(Exception):
@@ -340,8 +317,6 @@ class Bot(commands.Bot):
             del self.old_responses[message.id]
 
     async def on_command_completion(self, ctx) -> None:
-        # We don't need to overload our cache with every response.
-        # So, just pop the message object stored after the timeout.
         with suppress(KeyError):
             await asyncio.sleep(self.message_edit_timeout)
             self.old_responses.pop(ctx.message.id)

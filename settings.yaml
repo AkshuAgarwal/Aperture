@@ -5,5 +5,3 @@ startup:
 bot:
   default-prefix: "ap!"
   owner-only: false
-
-debug-mode: true
