@@ -99,7 +99,6 @@ class Bot(commands.Bot):
 
 
     async def create_pool(self, loop) -> asyncpg.Connection:
-        """Create database pool for the bot"""
         self.pool: asyncpg.Pool = await asyncpg.create_pool(
             host=os.getenv('DB_HOST'),
             port=int(os.getenv('DB_PORT')),
@@ -116,7 +115,6 @@ class Bot(commands.Bot):
 
     @staticmethod
     def _get_case_insensitive_prefixes(prefix: str) -> List[str]:
-        """Return a list of prefix in different Case"""
         return list(
             map(
                 ''.join, itertools.product(
@@ -172,7 +170,6 @@ class Bot(commands.Bot):
         self.load_extensions()
 
     def load_extensions(self) -> None:
-        """Load the extensions"""
         try:
             if settings['startup']['load-extensions-on-startup'] is True:
                 for ext in os.listdir('./aperture/extensions'):
@@ -242,7 +239,6 @@ class Bot(commands.Bot):
         self.aiohttp_session = aiohttp.ClientSession()
 
     async def get_owner_info(self) -> None:
-        """Method to get owner info for required functions."""
         _app_info = await self.application_info()
         if _app_info.team:
             self.owner_ids = [member.id for member in _app_info.team.members]
@@ -341,5 +337,4 @@ class Bot(commands.Bot):
 
 
     async def owner_only(self, ctx) -> bool:
-        """Method to check if the invoker is owner"""
         return ctx.author.id in [self.owner_id] + list(self.owner_ids)

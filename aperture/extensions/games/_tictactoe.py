@@ -1,3 +1,21 @@
+"""
+Aperture - A Multi-Purpose Discord Bot
+Copyright (C) 2021-present  AkshuAgarwal
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
 from typing import ClassVar, List, Optional, TypedDict, NamedTuple
 
 from discord import ButtonStyle, Interaction, Member, Message
@@ -20,7 +38,6 @@ class TicTacToeButton(Button):
     async def callback(self, interaction: Interaction) -> None:
         view: TicTacToeView = self.view
 
-        # If current turn (button clicked) is of X
         if view.cur_player[0] == view.X:
             self.style = ButtonStyle.danger
             self.emoji = emoji.tttx
@@ -29,23 +46,21 @@ class TicTacToeButton(Button):
             view.cur_player = view.O, view._players['player_o']
             _desc = f"It's {view._players['player_o'].mention}'s Turn!"
 
-        # If current turn (button clicked) is of Y
         elif view.cur_player[0] == view.O:
             self.style = ButtonStyle.success
             self.emoji = emoji.ttto
             self.disabled = True
             view.board[self.y][self.x] = view.O
             view.cur_player = view.X, view._players['player_x']
-            _desc = f"It's {view._players['player_x'].mention}'s Turn!" # X's
+            _desc = f"It's {view._players['player_x'].mention}'s Turn!"
 
-        # Check for Result (if there is any)
         _result = view.check_result()
-        if _result is not None: # This means match is over!
-            if _result == view.X: # We got X as Winner!
+        if _result is not None:
+            if _result == view.X:
                 _desc = f"{view._players['player_x'].mention} Won!"
-            elif _result == view.O: # We got Y as Winner!
+            elif _result == view.O:
                 _desc = f"{view._players['player_o'].mention} Won!"
-            else: # Match Tie!
+            else:
                 _desc = "It's a Tie!"
 
             for child in view.children:
@@ -56,7 +71,6 @@ class TicTacToeButton(Button):
         await interaction.response.edit_message(content=_desc, view=view)
 
 
-# Using typed stuff just for easy understanding and make the life easier :)
 class Players(TypedDict):
     player_x: Member
     player_o: Member
@@ -77,7 +91,7 @@ class TicTacToeView(View):
         self._players = players
         self.cur_player: Player = self.X, self._players['player_x']
 
-        self.board = [ # create the board
+        self.board = [
             [0, 0, 0],
             [0, 0, 0],
             [0, 0, 0],
@@ -85,10 +99,9 @@ class TicTacToeView(View):
 
         for x in range(3):
             for y in range(3):
-                self.add_item(TicTacToeButton(x, y)) # Add the Buttons to view
+                self.add_item(TicTacToeButton(x, y))
 
     def check_result(self) -> Optional[int]:
-        # Check for horizontal rows
         for row in self.board:
             _value = sum(row)
 
@@ -97,7 +110,6 @@ class TicTacToeView(View):
             elif _value == -3:
                 return self.O
 
-        # Check for vertical Columns
         for col in range(3):
             _value = self.board[0][col] + self.board[1][col] + self.board[2][col]
 
@@ -106,8 +118,6 @@ class TicTacToeView(View):
             elif _value == -3:
                 return self.O
 
-        # Check for diagonals
-        ## Checking for 1st diagonal
         _value = 0
         for item in range(3):
             _value += self.board[item][2-item]
@@ -117,7 +127,6 @@ class TicTacToeView(View):
         elif _value == -3:
             return self.O
 
-        ## Checking for 2nd diagonal
         _value = 0
         for item in range(3):
             _value += self.board[item][item]
@@ -127,11 +136,10 @@ class TicTacToeView(View):
         elif _value == -3:
             return self.O
 
-        # No case matched, now let's check if it was a tie
-        if all(i != 0 for row in self.board for i in row): # Check whether any value is still 0. If yes, the match is not yet Tie
+        if all(i != 0 for row in self.board for i in row):
             return self.Tie
 
-        return None # let the match continue if none of the cases matched
+        return None
 
     async def interaction_check(self, interaction: Interaction) -> bool:
         return interaction.user.id == self.cur_player[1].id

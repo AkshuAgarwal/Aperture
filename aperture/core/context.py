@@ -40,7 +40,6 @@ class CustomContext(commands.Context):
         attachments=None,
         suppress=False
         ):
-        """First response in every command must use this method to enable Message edit/delete response functionality"""
         try:
             response: Message = self.bot.old_responses[self.message.id]
             with _suppress(Exception):
@@ -89,7 +88,6 @@ class CustomContext(commands.Context):
         attachments=None,
         suppress=False
         ):
-        """First response in every command must use this method to enable Message edit/delete response functionality"""
         try:
             response: Message = self.bot.old_responses[self.message.id]
             with _suppress(Exception):

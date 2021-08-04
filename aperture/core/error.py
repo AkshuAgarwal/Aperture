@@ -35,10 +35,9 @@ from aperture.core.context import CustomContext
 
 class ApertureError(Exception):
     """Base exception class for all Aperture's Internal errors."""
+    pass
 
 class SettingsError(ApertureError):
-    """Exception raised for errors in the settings file."""
-
     def __init__(self, *args, **kwargs):
         default_message = "Settings file is not configured properly."
         
@@ -68,7 +67,6 @@ class TimeoutError(ApertureError):
 
 
 async def error_handler(ctx, error):
-    """Error handler for discord.py related Errors."""
     ignored = (CommandNotFound, )
     error = getattr(error, 'original', error)
 
@@ -174,7 +172,7 @@ async def error_handler(ctx, error):
         await ctx.reply(error.args[0])
         
     else:
-        with suppress(HTTPException): # Sometimes error is raised without any reference to message and raises unexpected HTTPException. So, just suppress that
+        with suppress(HTTPException):
             await ctx.reply(f'Oops! Some error Occured...\n> Error: `{error}`')
         print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
