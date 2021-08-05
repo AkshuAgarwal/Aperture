@@ -44,7 +44,7 @@ user: The User whose Avatar is to be found. Defaults to command invoker.""",
     async def _avatar(self, ctx: ApertureContext, user: Optional[Union[User, Member]]=None) -> Optional[Any]:
         _user: Union[User, Member] = user or ctx.author
         _asset: Asset = _user.avatar
-        
+
         _desc: str = f"> **Download Avatar:**\n> [png]({_asset.with_format('png').url}) | "\
                 f"[webp]({_asset.with_format('webp').url}) | [jpg]({_asset.with_format('jpg').url}) | "\
                     f"[jpeg]({_asset.with_format('jpeg').url})"

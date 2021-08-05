@@ -184,7 +184,7 @@ class ApertureContext(Context):
             If set, overrides the :attr:`~discord.AllowedMentions.replied_user` attribute of ``allowed_mentions``.
         view: :class:`discord.ui.View`
             A Discord UI View to add to the message.
-        
+
         Raises
         --------
         ~discord.HTTPException
@@ -211,7 +211,7 @@ class ApertureContext(Context):
             with sup(Exception):
                 await response.clear_reactions()
             if embed is not None:
-                return await response.edit(
+                response = await response.edit(
                     content=content,
                     embed=embed,
                     attachments=attachments,
@@ -221,7 +221,7 @@ class ApertureContext(Context):
                     view=view
                 )
             else:
-                return await response.edit(
+                response = await response.edit(
                     content=content,
                     embeds=embeds,
                     attachments=attachments,
@@ -230,6 +230,7 @@ class ApertureContext(Context):
                     allowed_mentions=allowed_mentions,
                     view=view
                 )
+            return response
         except KeyError:
             if embed is not None and file is not None:
                 response = await super().send(
@@ -294,7 +295,7 @@ class ApertureContext(Context):
         """|coro|
         A shortcut method to :meth:`discord.abc.Messageable.fsend` to reply to the
         :class:`discord.Message`.
-        
+
         Raises
         --------
         ~discord.HTTPException
@@ -304,7 +305,7 @@ class ApertureContext(Context):
         ~discord.InvalidArgument
             The ``files`` list is not of the appropriate size or
             you specified both ``file`` and ``files``.
-        
+
         Returns
         ---------
         :class:`discord.Message`

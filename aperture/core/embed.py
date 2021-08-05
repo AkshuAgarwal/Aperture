@@ -55,7 +55,7 @@ class ApertureEmbed(Embed):
     ) -> Embed:
         if color is EmptyEmbed and colour is EmptyEmbed:
             _color: int = 0x0CE6F5
-        elif not color is EmptyEmbed and not colour is EmptyEmbed:
+        elif color is not EmptyEmbed and colour is not EmptyEmbed:
             _color = color
         else:
             _color = color if color is not EmptyEmbed else colour

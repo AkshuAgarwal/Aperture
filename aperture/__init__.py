@@ -194,8 +194,8 @@ class ApertureBot(commands.Bot):
             log.critical('Settings file is not configured properly')
             raise SettingsError
 
-    def run(self, version) -> None:
-        self.version = version
+    def run(self, *args, **kwargs) -> None:
+        self.version = kwargs.get('version', None)
 
         print('Setting Up...')
         self.setup()
@@ -265,8 +265,7 @@ class ApertureBot(commands.Bot):
                 task.cancel()
             return done.pop().result()
 
-        else:
-            return await super().wait_for(event, check=check, timeout=timeout)
+        return await super().wait_for(event, check=check, timeout=timeout)
 
 
     async def process_commands(self, message: Message) -> None:
