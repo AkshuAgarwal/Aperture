@@ -28,14 +28,13 @@ from discord import (
     InvalidArgument,
     NotFound,
 )
-from discord.ext.commands import Context
-from discord.ui import button, View
+from discord.ui import View, button
 
-from aperture.core import emoji
+from aperture.core import ApertureContext, emoji
 from aperture.core.error import ConflictingArguments, MissingAllArguments
 
 
-__all__ = ('Paginator', 'PaginatorView', )
+__all__ = ('Paginator', )
 
 suppressed_errors = (HTTPException, NotFound, )
 
@@ -87,9 +86,10 @@ class Paginator:
             _page_length = max_length - (len(prefix) + len(suffix))
             self._pages = [prefix + content[i:i+_page_length] + suffix for i in range(0, len(content), _page_length)]
         
-    async def start(self, ctx: Context, **kwargs) -> Message:
+    async def start(self, ctx: ApertureContext, **kwargs) -> Message:
         view = PaginatorView(ctx, pages=self._pages, timeout=self.timeout)
-        await view.start(**kwargs)
+        response = await view.start(**kwargs)
+        return response
 
     @property
     def pages(self) -> List[Page]:
@@ -128,7 +128,7 @@ class Paginator:
 
 
 class PaginatorView(View):
-    def __init__(self, ctx: Context, *, pages: List[Page], timeout: Optional[float]=60.0) -> None:
+    def __init__(self, ctx: ApertureContext, *, pages: List[Page], timeout: Optional[float]=60.0) -> None:
         super().__init__(timeout=timeout)
         self.ctx = ctx
         self._pages = pages
@@ -136,7 +136,7 @@ class PaginatorView(View):
         self._interaction_message: Optional[Message] = None
 
     @button(style=ButtonStyle.blurple, emoji=emoji.pag_toStart)
-    async def _start(self, _, interaction: Interaction):
+    async def _start(self, _, interaction: Interaction) -> None:
         for child in self.children:
             child.disabled = False
         self._current_index = 0
@@ -153,7 +153,7 @@ class PaginatorView(View):
             self.stop()
 
     @button(style=ButtonStyle.blurple, emoji=emoji.pag_backward)
-    async def _backward(self, _, interaction: Interaction):
+    async def _backward(self, _, interaction: Interaction) -> None:
         for child in self.children:
             child.disabled = False
         self._current_index -= 1
@@ -170,7 +170,7 @@ class PaginatorView(View):
             self.stop()
 
     @button(style=ButtonStyle.blurple, emoji=emoji.pag_stop)
-    async def _stop(self, _, interaction: Interaction):
+    async def _stop(self, _, interaction: Interaction) -> None:
         for child in self.children:
             child.disabled = True
         with suppress(suppressed_errors):
@@ -178,7 +178,7 @@ class PaginatorView(View):
         self.stop()
 
     @button(style=ButtonStyle.blurple, emoji=emoji.pag_forward)
-    async def _forward(self, _, interaction: Interaction):
+    async def _forward(self, _, interaction: Interaction) -> None:
         for child in self.children:
             child.disabled = False
         self._current_index += 1
@@ -195,7 +195,7 @@ class PaginatorView(View):
             self.stop()
 
     @button(style=ButtonStyle.blurple, emoji=emoji.pag_toEnd)
-    async def _end(self, _, interaction: Interaction):
+    async def _end(self, _, interaction: Interaction) -> None:
         for child in self.children:
             child.disabled = False
         self._current_index = len(self._pages)-1
@@ -212,7 +212,7 @@ class PaginatorView(View):
             self.stop()
 
     @button(style=ButtonStyle.blurple, emoji=emoji.pag_jump_to)
-    async def _jump_to(self, _, interaction: Interaction):
+    async def _jump_to(self, _, interaction: Interaction) -> None:
         await interaction.response.send_message("Which page would you like to Jump to?", ephemeral=True)
         _request: Message = await self.ctx.bot.wait_for(
             'message', timeout=30.0,
@@ -243,11 +243,11 @@ class PaginatorView(View):
             self.stop()
 
     @button(style=ButtonStyle.secondary, emoji=emoji.pag_page_no, disabled=True)
-    async def _page_no(self, *_):
+    async def _page_no(self, *_) -> None:
         ...
 
     @button(style=ButtonStyle.danger, label='Delete', emoji=emoji.pag_delete)
-    async def _delete(self, _, interaction: Interaction):
+    async def _delete(self, _, interaction: Interaction) -> None:
         with suppress(suppressed_errors):
             await interaction.message.delete()
             self.stop()
@@ -260,7 +260,7 @@ class PaginatorView(View):
             child.disabled = True
         await self._interaction_message.edit(view=self)
 
-    async def start(self, **kwargs):
+    async def start(self, **kwargs) -> Message:
         for child in self.children:
             if child.emoji.name in self._what_to_disable():
                 child.disabled = True
@@ -270,15 +270,16 @@ class PaginatorView(View):
         kwargs.pop('view', None)
         if isinstance(self._pages[0], str):
             kwargs.pop('content', None)
-            _resp = await self.ctx.reply(content=self._pages[0], view=self, **kwargs)
+            _resp = await self.ctx.freply(content=self._pages[0], view=self, **kwargs)
         elif isinstance(self._pages[0], Embed):
             kwargs.pop('embed', None)
             kwargs.pop('embeds', None)
-            _resp = await self.ctx.reply(embed=self._pages[0], view=self, **kwargs)
+            _resp = await self.ctx.freply(embed=self._pages[0], view=self, **kwargs)
         
         self._interaction_message = _resp
+        return _resp
 
-    def update_page_no(self):
+    def update_page_no(self) -> None:
         for child in self.children:
             if child.emoji.name == emoji.pag_page_no:
                 child.label = f'Page No. {self._current_index+1}/{len(self._pages)}'

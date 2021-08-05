@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from contextlib import suppress
-from typing import Optional
+from typing import Dict, Optional
 
 from discord import (
     ButtonStyle,
@@ -31,12 +31,11 @@ from discord import (
     VoiceChannel
 )
 from discord.ui import Button, Item, View, select, button
-from discord.ext.commands import Context
 
-from aperture.core.error import view_error_handler
+from aperture.core import ApertureContext, view_error_handler
 
 
-vc_application_ids: dict = {
+vc_application_ids: Dict[str, int] = {
     'betrayal': 773336526917861400,
     'chess': 832012586023256104,
     'fishing': 814288819477020702,
@@ -45,7 +44,7 @@ vc_application_ids: dict = {
 }
 
 class VCActivity(View):
-    def __init__(self, ctx: Context, *, channel: VoiceChannel, timeout: Optional[float] = 30.0):
+    def __init__(self, ctx: ApertureContext, *, channel: VoiceChannel, timeout: Optional[float] = 30.0) -> None:
         super().__init__(timeout=timeout)
         self.ctx = ctx
         self.channel = channel
@@ -62,13 +61,15 @@ class VCActivity(View):
         min_values=1,
         max_values=1
     )
-    async def callback(self, *_): ...
+    async def callback(self, *_) -> None: ...
 
     @button(label='Create Activity', style=ButtonStyle.primary)
-    async def create_link(self, _, interaction: Interaction):
-        reason = 'Activity Link created using `activity` command.'
+    async def create_link(self, _, interaction: Interaction) -> None:
+        reason: str = 'Activity Link created using `activity` command.'
         with suppress(AttributeError):
-            reason = f'Activity link created using `activity` command, requested by {self.message.author} - {self.message.author.id}'
+            reason: str = 'Activity link created using `activity` command, '\
+                f'requested by {self.message.author} - {self.message.author.id}'
+        
         _invite: Invite = await self.channel.create_invite(
             reason=reason,
             max_age=0,
@@ -76,6 +77,7 @@ class VCActivity(View):
             target_type=InviteTarget.embedded_application,
             target_application_id=vc_application_ids[self.children[0].values[0]]
         )
+        
         link_btn = Button(label='Join the Activity!', style=ButtonStyle.link, url=_invite.url)
         self.clear_items()
         self.add_item(link_btn)

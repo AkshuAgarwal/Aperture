@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-import datetime
+from datetime import datetime
 from typing import Optional, Union
 
 from discord import Colour, Embed
@@ -24,7 +24,7 @@ from discord.embeds import _EmptyEmbed, EmptyEmbed
 from discord.ext.commands import Context
 
 
-class CustomEmbed(Embed):
+class ApertureEmbed(Embed):
     def __init__(
         self,
         *,
@@ -34,7 +34,7 @@ class CustomEmbed(Embed):
         type = 'rich',
         url = EmptyEmbed,
         description = EmptyEmbed,
-        timestamp: datetime.datetime = None,
+        timestamp: datetime = None,
     ):
         super().__init__(
             colour=colour, color=color, title=title, type=type, url=url, description=description, timestamp=timestamp
@@ -51,16 +51,16 @@ class CustomEmbed(Embed):
         type = 'rich',
         url = EmptyEmbed,
         description = EmptyEmbed,
-        timestamp: Optional[datetime.datetime] = None,
+        timestamp: Optional[datetime] = None,
     ) -> Embed:
         if color is EmptyEmbed and colour is EmptyEmbed:
-            _color = 0x0CE6F5
+            _color: int = 0x0CE6F5
         elif not color is EmptyEmbed and not colour is EmptyEmbed:
             _color = color
         else:
             _color = color if color is not EmptyEmbed else colour
 
-        _timestamp = timestamp or datetime.datetime.now()
+        _timestamp: datetime = timestamp or datetime.now()
 
         _embed = cls(
             color=_color,

@@ -1,7 +1,6 @@
-from aperture import Bot
+from aperture import ApertureBot
 
 __version__ = '0.0.1'
 
 if __name__ == '__main__':
-    bot = Bot()
-    bot.run(__version__)
+    ApertureBot().run(__version__)

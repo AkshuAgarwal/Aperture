@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import asyncio
-from typing import Optional
+from typing import Any, Optional, TYPE_CHECKING
 
 from discord import Member, Message
 from discord.ext import commands
@@ -26,16 +26,17 @@ from ._tictactoe import (
     TicTacToeView,
     RequestToPlayView,
     ConfirmationView,
-    Players as TicTacToePlayers
 )
 
-from aperture.core import emoji
+from aperture import ApertureBot
+from aperture.core import emoji, ApertureContext
+from ._tictactoe import Players as TicTacToePlayers
 
 
 class Games(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: ApertureBot):
         self.bot = bot
-        self.description = "Bot Games to play. Also includes Multiplayer Games!"
+        self.description: str = "Bot Games to play. Also includes Multiplayer Games!"
 
 
     @commands.command(
@@ -50,7 +51,7 @@ member: The Guild Member you want to compete with. If not given, the Bot sends a
     )
     @commands.guild_only()
     @commands.cooldown(1, 15, commands.BucketType.user)
-    async def _tictactoe(self, ctx, opponent: Optional[Member]=None) -> Message:
+    async def _tictactoe(self, ctx: ApertureContext, opponent: Optional[Member]=None) -> Optional[Any]:
         _players: TicTacToePlayers = {'player_x': ctx.author}
 
         if not opponent:

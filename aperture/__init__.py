@@ -24,7 +24,7 @@ import logging
 import logging.config
 from datetime import datetime
 from contextlib import suppress
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import aiohttp
 import asyncpg
@@ -41,33 +41,32 @@ from discord import (
 )
 from discord.ext import commands
 
-from aperture.core import CustomContext, error_handler
+from aperture.core import ApertureContext, error_handler
 from aperture.core.error import SettingsError
 
 
 log = logging.getLogger(__name__)
+load_dotenv('./.env')
 
 if not os.path.exists('./tmp'):
     os.makedirs('./tmp')
     print('Created directory "tmp" in the project root directory')
 
 with open('./logging.yaml', 'r', encoding='UTF-8') as stream:
-    log_config = yaml.load(stream, Loader=yaml.FullLoader)
+    log_config: Union[Dict[str, Any], Any] = yaml.load(stream, Loader=yaml.FullLoader)
     logging.config.dictConfig(log_config)
 
 with open('./settings.yaml', 'r', encoding='utf-8') as file:
-    settings = yaml.load(file, Loader=yaml.FullLoader)
+    settings: Union[Dict[str, Any], Any] = yaml.load(file, Loader=yaml.FullLoader)
     log.info('Loaded settings file')
-
-load_dotenv('./.env')
 
 if sys.version_info[:2] in [(3, 8), (3, 9)] and sys.platform.startswith('win'):
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     log.debug('Asyncio Event Loop Policy set to Windows Selector Event Loop Policy')
 
 
-class Bot(commands.Bot):
-    def __init__(self):
+class ApertureBot(commands.Bot):
+    def __init__(self) -> None:
         super().__init__(
             case_insensitive=True,
             command_prefix=self.get_prefix,
@@ -78,10 +77,11 @@ class Bot(commands.Bot):
         )
 
         self.ready: bool = False
+        self.version: Optional[str] = None
         self.aiohttp_session: Optional[aiohttp.ClientSession] = None
         self.pool: Optional[asyncpg.Pool] = None
 
-        self.launch_time = datetime.utcnow()
+        self.launch_time: datetime = datetime.utcnow()
         self.message_edit_timeout: int = 120
         self.old_responses: dict = {}
         self.prefixes: dict = {}
@@ -98,7 +98,7 @@ class Bot(commands.Bot):
             raise SettingsError
 
 
-    async def create_pool(self, loop) -> asyncpg.Connection:
+    async def create_pool(self, loop: asyncio.AbstractEventLoop) -> asyncpg.Pool:
         self.pool: asyncpg.Pool = await asyncpg.create_pool(
             host=os.getenv('DB_HOST'),
             port=int(os.getenv('DB_PORT')),
@@ -128,7 +128,7 @@ class Bot(commands.Bot):
 
     async def get_prefix(self, message: Message) -> Union[List[str], str]:
         try:
-            default_prefix = settings['bot']['default-prefix'] or 'ap!'
+            default_prefix: str = settings['bot']['default-prefix'] or 'ap!'
         except KeyError:
             log.critical('Settings file is not configured properly')
             raise SettingsError
@@ -136,19 +136,19 @@ class Bot(commands.Bot):
         if isinstance(message.channel, DMChannel):
             return self._get_case_insensitive_prefixes(default_prefix)
         try:
-            data = self.prefixes[message.guild.id]
-            prefix = data[0]
+            data: List[str, bool] = self.prefixes[message.guild.id]
+            prefix: str = data[0]
             if data[1] is False:
                 return prefix
             return self._get_case_insensitive_prefixes(prefix)
         except KeyError:
             async with self.pool.acquire() as conn:
-                raw_data = await conn.fetch('SELECT * FROM guild_data;')
+                raw_data: List[asyncpg.Record] = await conn.fetch('SELECT * FROM guild_data;')
                 for row in raw_data:
                     self.prefixes[row['guild_id']] = [row['prefix'], row['prefix_case_insensitive']]
             try:
-                data = self.prefixes[message.guild.id]
-                prefix = data[0]
+                data: List[str, bool] = self.prefixes[message.guild.id]
+                prefix: str = data[0]
                 if data[1] is False:
                     return prefix
                 return self._get_case_insensitive_prefixes(prefix)
@@ -195,12 +195,12 @@ class Bot(commands.Bot):
             raise SettingsError
 
     def run(self, version) -> None:
-        self._version = version
+        self.version = version
 
         print('Setting Up...')
         self.setup()
 
-        _token = os.getenv('TOKEN')
+        _token: str = os.getenv('TOKEN')
         print('Running the Bot...')
         log.info('Logging in using static Token...')
         super().run(_token, reconnect=True)
@@ -241,11 +241,11 @@ class Bot(commands.Bot):
     async def get_owner_info(self) -> None:
         _app_info = await self.application_info()
         if _app_info.team:
-            self.owner_ids = [member.id for member in _app_info.team.members]
+            self.owner_ids: List[int] = [member.id for member in _app_info.team.members]
         else:
-            self.owner_id = _app_info.owner.id
+            self.owner_id: int = _app_info.owner.id
 
-    async def on_command_error(self, ctx, exc) -> None:
+    async def on_command_error(self, ctx: ApertureContext, exc: Exception) -> None:
         if ctx.command.has_error_handler():
             return
         log.debug('Command %s responded with error %s\nMessage ID: %s, Author ID: %s, Guild ID: %s',
@@ -270,7 +270,7 @@ class Bot(commands.Bot):
 
 
     async def process_commands(self, message: Message) -> None:
-        ctx = await self.get_context(message, cls=CustomContext)
+        ctx = await self.get_context(message, cls=ApertureContext)
         if ctx.command is None:
             return
         if isinstance(ctx.me, Member):
@@ -310,12 +310,11 @@ class Bot(commands.Bot):
         with suppress(Exception):
             bot_response: Message = self.old_responses[message.id]
             await bot_response.delete()
-            del self.old_responses[message.id]
+            self.old_responses.pop(message.id, None)
 
     async def on_command_completion(self, ctx) -> None:
-        with suppress(KeyError):
-            await asyncio.sleep(self.message_edit_timeout)
-            self.old_responses.pop(ctx.message.id)
+        await asyncio.sleep(self.message_edit_timeout)
+        self.old_responses.pop(ctx.message.id, None)
 
     async def on_guild_join(self, guild: Guild) -> None:
         try:
@@ -336,5 +335,5 @@ class Bot(commands.Bot):
                 await conn.execute('DELETE FROM guild_data WHERE guild_id = $1;', guild.id)
 
 
-    async def owner_only(self, ctx) -> bool:
+    async def owner_only(self, ctx: ApertureContext) -> bool:
         return ctx.author.id in [self.owner_id] + list(self.owner_ids)

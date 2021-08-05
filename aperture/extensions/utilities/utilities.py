@@ -16,18 +16,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Optional
+from typing import Any, Optional, Union
 
-from discord import User
+from discord import Asset, Member, User
 from discord.ext import commands
 
-from aperture.core import CustomEmbed
+from aperture import ApertureBot
+from aperture.core import ApertureEmbed, ApertureContext
 
 
 class Utilities(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: ApertureBot):
         self.bot = bot
-        self.description = """Basic/general usage commands."""
+        self.description: str = """Basic/general usage commands."""
 
     @commands.command(
         name='avatar',
@@ -40,19 +41,20 @@ user: The User whose Avatar is to be found. Defaults to command invoker.""",
         usage='[user: User/Member, default=Command Invoker]'
     )
     @commands.cooldown(1, 10, commands.BucketType.user)
-    async def _avatar(self, ctx, user: Optional[User]=None):
-        _member = user or ctx.author
-        _asset = _member.avatar
-        _desc = f"> **Download Avatar:**\n> [png]({_asset.with_format('png').url}) | "\
+    async def _avatar(self, ctx: ApertureContext, user: Optional[Union[User, Member]]=None) -> Optional[Any]:
+        _user: Union[User, Member] = user or ctx.author
+        _asset: Asset = _user.avatar
+        
+        _desc: str = f"> **Download Avatar:**\n> [png]({_asset.with_format('png').url}) | "\
                 f"[webp]({_asset.with_format('webp').url}) | [jpg]({_asset.with_format('jpg').url}) | "\
                     f"[jpeg]({_asset.with_format('jpeg').url})"
 
         if _asset.key.isdigit():
-            _desc = f"> **Download Avatar:**\n> [png]({_asset.with_format('png').url})"
+            _desc: str = f"> **Download Avatar:**\n> [png]({_asset.with_format('png').url})"
         elif _asset.is_animated():
             _desc += f" | [gif]({_asset.with_format('gif').url})"
 
-        embed = CustomEmbed.default(ctx, title=f"{_member}'s Avatar", description=_desc)
+        embed = ApertureEmbed.default(ctx, title=f"{_user}'s Avatar", description=_desc)
         embed.set_image(url=_asset.url)
 
         await ctx.freply(embed=embed)

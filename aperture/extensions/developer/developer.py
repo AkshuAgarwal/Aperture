@@ -20,23 +20,25 @@ import os
 import asyncio
 import logging
 from contextlib import suppress
-from typing import List
+from typing import Any, ClassVar, List, Optional
 
 from discord import Message
 from discord.ext import commands
 
-from aperture.core import emoji
+from aperture import ApertureBot
+from aperture.core import ApertureContext, emoji
 from ._views import ConfirmationView
+
 
 log = logging.getLogger(__name__)
 
 
 class Developer(commands.Cog):
-    _unload_restricted: List[str] = ['developer']
+    _unload_restricted: ClassVar[List[str]] = ['developer']
     
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot: ApertureBot):
         self.bot = bot
-        self.description = 'Bot Owner (Developer) only Commands!'
+        self.description: str = 'Bot Owner (Developer) only Commands!'
 
 
     @commands.command(
@@ -51,9 +53,9 @@ extension_name: Name of the extension to be loaded. Extension names are delimite
     )
     @commands.is_owner()
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def _load(self, ctx, *, extensions_name: str = None) -> Message:
+    async def _load(self, ctx: ApertureContext, *, extensions_name: str = None) -> Optional[Any]:
         view = ConfirmationView(ctx, timeout=30.0)
-        _response = await ctx.freply('Are you sure to perform the task?', view=view)
+        _response: Message = await ctx.freply('Are you sure to perform the task?', view=view)
         await view.wait()
 
         if view.value is None:
@@ -70,9 +72,9 @@ extension_name: Name of the extension to be loaded. Extension names are delimite
                     log.debug(f'loaded {ext} on command.')
             return await _response.edit(content=f'{emoji.greenTick} Loaded all unloaded Extensions', view=view)
         else:
-            _extensions = extensions_name.split()
-            _loaded_extensions = []
-            _failed_extensions = {}
+            _extensions: list = extensions_name.split()
+            _loaded_extensions: list = []
+            _failed_extensions: dict = {}
             for ext in _extensions:
                 try:
                     self.bot.load_extension(f'aperture.extensions.{ext}')
@@ -106,9 +108,9 @@ extension_name: Name of the extension to be unloaded. Extension names are delimi
     )
     @commands.is_owner()
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def _unload(self, ctx, *, extensions_name: str = None) -> Message:
+    async def _unload(self, ctx: ApertureContext, *, extensions_name: str = None) -> Optional[Any]:
         view = ConfirmationView(ctx, timeout=30.0)
-        _response = await ctx.freply('Are you sure to perform the task?', view=view)
+        _response: Message = await ctx.freply('Are you sure to perform the task?', view=view)
         await view.wait()
 
         if view.value is None:
@@ -126,9 +128,9 @@ extension_name: Name of the extension to be unloaded. Extension names are delimi
                         log.debug(f'unloaded {ext} on command.')
             return await _response.edit(content=f'{emoji.greenTick} Unloaded all loaded Extensions', view=view)
         else:
-            _extensions = extensions_name.split()
-            _unloaded_extensions = []
-            _failed_extensions = {}
+            _extensions: list = extensions_name.split()
+            _unloaded_extensions: list = []
+            _failed_extensions: dict = {}
             for ext in _extensions:
                 try:
                     self.bot.unload_extension(f'aperture.extensions.{ext}')
@@ -162,9 +164,9 @@ extension_name: Name of the extension to be reloaded. Extension names are delimi
     )
     @commands.is_owner()
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def _reload(self, ctx, *, extensions_name: str = None) -> Message:
+    async def _reload(self, ctx: ApertureContext, *, extensions_name: str = None) -> Optional[Any]:
         view = ConfirmationView(ctx, timeout=30.0)
-        _response = await ctx.freply('Are you sure to perform the task?', view=view)
+        _response: Message = await ctx.freply('Are you sure to perform the task?', view=view)
         await view.wait()
 
         if view.value is None:
@@ -181,9 +183,9 @@ extension_name: Name of the extension to be reloaded. Extension names are delimi
                     log.debug(f'reloaded {ext} on command.')
             return await _response.edit(content=f'{emoji.greenTick} Reloaded all loaded Extensions', view=view)
         else:
-            _extensions = extensions_name.split()
-            _reloaded_extensions = []
-            _failed_extensions = {}
+            _extensions: list = extensions_name.split()
+            _reloaded_extensions: list = []
+            _failed_extensions: dict = {}
             for ext in _extensions:
                 try:
                     self.bot.reload_extension(f'aperture.extensions.{ext}')

@@ -21,7 +21,7 @@ from contextlib import suppress as _suppress
 from discord import Message
 from discord.ext import commands
 
-class CustomContext(commands.Context):
+class ApertureContext(commands.Context):
     async def fsend(
         self,
         content=None,

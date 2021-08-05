@@ -16,20 +16,23 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from typing import Any, Optional
+
 from discord import Message
 from discord.ext import commands
 
-from aperture.core import CustomEmbed
+from aperture import ApertureBot
+from aperture.core import ApertureEmbed, ApertureContext
 
 
 class Fun(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: ApertureBot):
         self.bot = bot
-        self.description = """Some basic mini-games/fun commands to play with"""
+        self.description: str = """Some basic mini-games/fun commands to play with"""
 
 
     @commands.Cog.listener()
-    async def on_message_delete(self, message: Message):
+    async def on_message_delete(self, message: Message) -> None:
         if message.content is None:
             return
         self.bot.snipes[message.channel.id] = message
@@ -45,7 +48,7 @@ The command only returns messages with some content and will not save if the con
     )
     @commands.guild_only()
     @commands.cooldown(1, 10, commands.BucketType.channel)
-    async def snipe(self, ctx) -> Message:
+    async def snipe(self, ctx: ApertureContext) -> Optional[Any]:
         try:
             _message: Message = self.bot.snipes[ctx.channel.id]
             if not _message.content:
@@ -53,7 +56,7 @@ The command only returns messages with some content and will not save if the con
         except KeyError:
             return await ctx.freply('No Sniped Messages found in this channel')
 
-        embed = CustomEmbed.default(
+        embed = ApertureEmbed.default(
             ctx, title='Sniped Message', description=_message.content + '\n- ' + _message.author.mention
         )
         return await ctx.freply(embed=embed)

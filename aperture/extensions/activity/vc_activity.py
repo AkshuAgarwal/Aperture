@@ -16,18 +16,20 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from typing import Optional
+from typing import Any, Optional
 
-from discord import VoiceChannel
+from discord import Message, VoiceChannel
 from discord.ext import commands
 
 from ._views import VCActivity
+from aperture import ApertureBot
+from aperture.core import ApertureContext
 
 
 class Activity(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: ApertureBot):
         self.bot = bot
-        self.description = "Commands to create and use Discord's Beta Party VC Games."
+        self.description: str = "Commands to create and use Discord's Beta Party VC Games."
 
 
     @commands.command(
@@ -43,13 +45,13 @@ voice_channel: The Voice Channel for which the link is to be created. Defaults t
     @commands.bot_has_guild_permissions(create_instant_invite=True)
     @commands.guild_only()
     @commands.cooldown(1, 15, commands.BucketType.user)
-    async def vc_activity(self, ctx, voice_channel: Optional[VoiceChannel] = None):
+    async def vc_activity(self, ctx: ApertureContext, voice_channel: Optional[VoiceChannel] = None) -> Optional[Any]:
         if not voice_channel and not ctx.author.voice:
             return await ctx.freply('You either need to join or input a Voice Channel manually to create an invite.')
         if not voice_channel:
-            _channel = ctx.author.voice.channel
+            _channel: VoiceChannel = ctx.author.voice.channel
         else:
-            _channel = voice_channel
+            _channel: VoiceChannel = voice_channel
         _view = VCActivity(ctx, channel=_channel)
-        _resp = await ctx.freply(content='Select an option from the Dropdown to create the activity', view=_view)
+        _resp: Message = await ctx.freply(content='Select an option from the Dropdown to create the activity', view=_view)
         _view.message = _resp

@@ -19,13 +19,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from typing import ClassVar, List, Optional, TypedDict, NamedTuple
 
 from discord import ButtonStyle, Interaction, Member, Message
-from discord.ui import button, Button, View
+from discord.ui import button, Button, Item, View
 
-from aperture.core import emoji
+from aperture.core import ApertureContext, emoji, view_error_handler
 
 
 class TicTacToeButton(Button):
-    def __init__(self, x: int, y: int):
+    def __init__(self, x: int, y: int) -> None:
         super().__init__(
             style=ButtonStyle.blurple,
             label='\u200b',
@@ -44,7 +44,7 @@ class TicTacToeButton(Button):
             self.disabled = True
             view.board[self.y][self.x] = view.X
             view.cur_player = view.O, view._players['player_o']
-            _desc = f"It's {view._players['player_o'].mention}'s Turn!"
+            _description: str = f"It's {view._players['player_o'].mention}'s Turn!"
 
         elif view.cur_player[0] == view.O:
             self.style = ButtonStyle.success
@@ -52,23 +52,23 @@ class TicTacToeButton(Button):
             self.disabled = True
             view.board[self.y][self.x] = view.O
             view.cur_player = view.X, view._players['player_x']
-            _desc = f"It's {view._players['player_x'].mention}'s Turn!"
+            _description: str = f"It's {view._players['player_x'].mention}'s Turn!"
 
         _result = view.check_result()
         if _result is not None:
             if _result == view.X:
-                _desc = f"{view._players['player_x'].mention} Won!"
+                _description: str = f"{view._players['player_x'].mention} Won!"
             elif _result == view.O:
-                _desc = f"{view._players['player_o'].mention} Won!"
+                _description: str = f"{view._players['player_o'].mention} Won!"
             else:
-                _desc = "It's a Tie!"
+                _description: str = "It's a Tie!"
 
             for child in view.children:
                 child.disabled = True
 
             view.stop()
 
-        await interaction.response.edit_message(content=_desc, view=view)
+        await interaction.response.edit_message(content=_description, view=view)
 
 
 class Players(TypedDict):
@@ -91,7 +91,7 @@ class TicTacToeView(View):
         self._players = players
         self.cur_player: Player = self.X, self._players['player_x']
 
-        self.board = [
+        self.board: List[List[int]] = [
             [0, 0, 0],
             [0, 0, 0],
             [0, 0, 0],
@@ -150,16 +150,18 @@ class TicTacToeView(View):
             child.disabled = True
         await self._response.edit(content=f':alarm_clock: {self.cur_player[1].mention} timed out responding...\nTherefore, {self._players[0].mention} Won! :tada:', view=self)
 
+    async def on_error(self, error: Exception, item: Item, interaction: Interaction) -> None:
+        await view_error_handler(error, item, interaction)
 
 class RequestToPlayView(View):
-    def __init__(self, ctx, *, timeout: Optional[float] = 30.0, player_list: list) -> None:
+    def __init__(self, ctx: ApertureContext, *, timeout: Optional[float] = 30.0, player_list: Players) -> None:
         super().__init__(timeout=timeout)
         self.ctx = ctx
         self._player_list = player_list
         self.response: Optional[Message] = None
 
     @button(label='Join', style=ButtonStyle.success, emoji=emoji.door)
-    async def _join_button(self, button: Button, interaction: Interaction) -> None:
+    async def _join_button(self, _, interaction: Interaction) -> None:
         self._player_list['player_o'] = interaction.user
         await interaction.response.send_message(content=f'{emoji.greenTick} Joined the Match!', ephemeral=True)
         self.stop()
@@ -170,6 +172,9 @@ class RequestToPlayView(View):
     async def on_timeout(self) -> None:
         self.children[0].disabled = True
         await self.response.edit(content='Timed out waiting for players to Join...', view=self)
+
+    async def on_error(self, error: Exception, item: Item, interaction: Interaction) -> None:
+        await view_error_handler(error, item, interaction)
 
 class ConfirmationView(View):
     def __init__(self, *, timeout: Optional[float] = 30.0, confirm_from: Member) -> None:
@@ -196,3 +201,6 @@ class ConfirmationView(View):
         for child in self.children:
             child.disabled = True
         await self.response.edit(content=f"{self.opponent.name} didn't responded...", view=self)
+
+    async def on_error(self, error: Exception, item: Item, interaction: Interaction) -> None:
+        await view_error_handler(error, item, interaction)
