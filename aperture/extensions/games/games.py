@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import asyncio
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Any, Optional
 
 from discord import Member, Message
 from discord.ext import commands
@@ -69,11 +69,11 @@ member: The Guild Member you want to compete with. If not given, the Bot sends a
                 content=f'{_players["player_o"].mention} Joined! Starting the Match in 5 Seconds...', view=None
             )
             await asyncio.sleep(5)
-        
+
         else:
             if opponent.id == ctx.author.id:
                 return await ctx.freply(f"{emoji.redCross} You can't play with yourself...")
-            confirm_view = ConfirmationView(confirm_from=opponent)
+            confirm_view = ConfirmationView(ctx, confirm_from=opponent)
             _resp: Message = await ctx.freply(
                 f'{opponent.mention}, Would you like to join a Match of Tic-Tac-Toe against {ctx.author.name}?',
                 view=confirm_view
@@ -90,5 +90,5 @@ member: The Guild Member you want to compete with. If not given, the Bot sends a
                 await _resp.edit(content=f'{opponent.mention} Joined! Starting the Match in 5 Seconds...', view=None)
                 await asyncio.sleep(5)
 
-        _view = TicTacToeView(players=_players, response=_resp)
+        _view = TicTacToeView(ctx, players=_players, response=_resp)
         return await _resp.edit(content=f"It's now {ctx.author.mention}'s Turn!", view=_view)

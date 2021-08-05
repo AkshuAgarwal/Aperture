@@ -69,7 +69,7 @@ class VCActivity(View):
         with suppress(AttributeError):
             reason: str = 'Activity link created using `activity` command, '\
                 f'requested by {self.message.author} - {self.message.author.id}'
-        
+
         _invite: Invite = await self.channel.create_invite(
             reason=reason,
             max_age=0,
@@ -77,7 +77,7 @@ class VCActivity(View):
             target_type=InviteTarget.embedded_application,
             target_application_id=vc_application_ids[self.children[0].values[0]]
         )
-        
+
         link_btn = Button(label='Join the Activity!', style=ButtonStyle.link, url=_invite.url)
         self.clear_items()
         self.add_item(link_btn)
@@ -94,4 +94,4 @@ class VCActivity(View):
             await self.message.edit(content='Timed out waiting for response...', view=self)
 
     async def on_error(self, error: Exception, item: Item, interaction: Interaction) -> None:
-        await view_error_handler(error, item, interaction)
+        await view_error_handler(self.ctx.bot, error, item, interaction)

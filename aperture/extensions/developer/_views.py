@@ -21,4 +21,4 @@ class ConfirmationView(View):
         return interaction.user.id == self.ctx.author.id
 
     async def on_error(self, error: Exception, item: Item, interaction: Interaction) -> None:
-        await view_error_handler(error, item, interaction)
+        await view_error_handler(self.ctx.bot, error, item, interaction)

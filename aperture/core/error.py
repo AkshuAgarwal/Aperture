@@ -40,10 +40,10 @@ class ApertureError(Exception):
 class SettingsError(ApertureError):
     def __init__(self, *args, **kwargs):
         default_message = "Settings file is not configured properly."
-        
+
         if not args:
             args = (default_message, )
-        
+
         super().__init__(*args, **kwargs)
 
 class ConflictingArguments(BadArgument):
@@ -62,7 +62,7 @@ class TimeoutError(ApertureError):
 
         if not args:
             args = (default_message, )
-        
+
         super().__init__(*args, **kwargs)
 
 
@@ -99,7 +99,7 @@ async def error_handler(ctx, error):
     elif isinstance(error, RoleNotFound):
         await ctx.reply(f'Unable to find Role!\n> Argument passed: `{error.argument}`')
     elif isinstance(error, BadInviteArgument):
-        await ctx.reply(f'The Invite is either Invalid or Expired!')
+        await ctx.reply('The Invite is either Invalid or Expired!')
     elif isinstance(error, EmojiNotFound):
         await ctx.reply(f'Unable to find Emoji!\n> Argument passed: `{error.argument}`')
     elif isinstance(error, PartialEmojiConversionFailure):
@@ -140,7 +140,7 @@ async def error_handler(ctx, error):
     elif isinstance(error, CheckFailure) and 'global check' in str(error):
         await ctx.reply('The Bot is currently running in owner-only mode.')
     elif isinstance(error, CheckAnyFailure):
-        await ctx.reply(f'All Checks failed! You cannot use this Command.')
+        await ctx.reply('All Checks failed! You cannot use this Command.')
     elif isinstance(error, PrivateMessageOnly):
         await ctx.reply('This command or an Operation in this command works in Private Messages (DMs) only!')
     elif isinstance(error, NoPrivateMessage):
@@ -211,13 +211,13 @@ async def error_handler(ctx, error):
             f'Command with name `{error.name}` cannot be addded because it\'s name is already taken by a different '
             f'Command.\n> Alias Conflict: `{error.alias_conflict}`')
     elif isinstance(error, InteractionResponded):
-        await ctx.reply(f'The interaction is already Responded!')
+        await ctx.reply('The interaction is already Responded!')
 
     elif isinstance(error, asyncio.exceptions.TimeoutError):
         await ctx.reply('Timed out waiting for response...')
     elif isinstance(error, TimeoutError):
         await ctx.reply(error.args[0])
-        
+
     else:
         with suppress(HTTPException):
             await ctx.reply(f'Oops! Some error Occured...\n> Error: `{error}`')
@@ -225,8 +225,8 @@ async def error_handler(ctx, error):
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
 
-async def view_error_handler(error, _, interaction: Interaction):
+async def view_error_handler(bot, error, _, interaction: Interaction):
     if isinstance(error, NotFound) and error.code == 10062 and error.text == 'Unknown Interaction':
         return
-    ctx = Bot.get_context(interaction.message, cls=ApertureContext)
+    ctx = bot.get_context(interaction.message, cls=ApertureContext)
     await error_handler(ctx, error)

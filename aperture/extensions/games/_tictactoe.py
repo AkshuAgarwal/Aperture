@@ -85,8 +85,9 @@ class TicTacToeView(View):
     O: ClassVar[int] = -1
     Tie: ClassVar[int] = 2
 
-    def __init__(self, *, timeout: Optional[float] = 30.0, players: Players, response: Message) -> None:
+    def __init__(self, ctx: ApertureContext, *, timeout: Optional[float] = 30.0, players: Players, response: Message) -> None:
         super().__init__(timeout=timeout)
+        self.ctx = ctx
         self._response = response
         self._players = players
         self.cur_player: Player = self.X, self._players['player_x']
@@ -151,7 +152,7 @@ class TicTacToeView(View):
         await self._response.edit(content=f':alarm_clock: {self.cur_player[1].mention} timed out responding...\nTherefore, {self._players[0].mention} Won! :tada:', view=self)
 
     async def on_error(self, error: Exception, item: Item, interaction: Interaction) -> None:
-        await view_error_handler(error, item, interaction)
+        await view_error_handler(self.ctx.bot, error, item, interaction)
 
 class RequestToPlayView(View):
     def __init__(self, ctx: ApertureContext, *, timeout: Optional[float] = 30.0, player_list: Players) -> None:
@@ -174,11 +175,12 @@ class RequestToPlayView(View):
         await self.response.edit(content='Timed out waiting for players to Join...', view=self)
 
     async def on_error(self, error: Exception, item: Item, interaction: Interaction) -> None:
-        await view_error_handler(error, item, interaction)
+        await view_error_handler(self.ctx.bot, error, item, interaction)
 
 class ConfirmationView(View):
-    def __init__(self, *, timeout: Optional[float] = 30.0, confirm_from: Member) -> None:
+    def __init__(self, ctx: ApertureContext, *, timeout: Optional[float] = 30.0, confirm_from: Member) -> None:
         super().__init__(timeout=timeout)
+        self.ctx = ctx
         self.opponent = confirm_from
         self.state: Optional[bool] = None
         self.response: Optional[Message] = None
@@ -203,4 +205,4 @@ class ConfirmationView(View):
         await self.response.edit(content=f"{self.opponent.name} didn't responded...", view=self)
 
     async def on_error(self, error: Exception, item: Item, interaction: Interaction) -> None:
-        await view_error_handler(error, item, interaction)
+        await view_error_handler(self.ctx.bot, error, item, interaction)

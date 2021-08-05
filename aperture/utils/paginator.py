@@ -28,9 +28,9 @@ from discord import (
     InvalidArgument,
     NotFound,
 )
-from discord.ui import View, button
+from discord.ui import Item, View, button
 
-from aperture.core import ApertureContext, emoji
+from aperture.core import ApertureContext, emoji, view_error_handler
 from aperture.core.error import ConflictingArguments, MissingAllArguments
 
 
@@ -85,7 +85,7 @@ class Paginator:
         else:
             _page_length = max_length - (len(prefix) + len(suffix))
             self._pages = [prefix + content[i:i+_page_length] + suffix for i in range(0, len(content), _page_length)]
-        
+
     async def start(self, ctx: ApertureContext, **kwargs) -> Message:
         view = PaginatorView(ctx, pages=self._pages, timeout=self.timeout)
         response = await view.start(**kwargs)
@@ -96,7 +96,7 @@ class Paginator:
         return self._pages
 
     def add_page(self, page: Page, index: Optional[int]=None) -> List[Page]:
-        if not type(page) == type(self._pages[0]):
+        if not isinstance(page, self._pages[0]):
             raise TypeError(
                 f'Cannot add page of type {page.__class__!r} into the list of {self._pages[0].__class__!r}'
             )
@@ -119,7 +119,7 @@ class Paginator:
             raise MissingAllArguments(['page', 'index'])
         if all(page, index):
             raise ConflictingArguments(['page', 'index'])
-        
+
         if page:
             self._pages.pop(self._pages.index(page))
         elif index:
@@ -260,6 +260,9 @@ class PaginatorView(View):
             child.disabled = True
         await self._interaction_message.edit(view=self)
 
+    async def on_error(self, error: Exception, item: Item, interaction: Interaction) -> None:
+        await view_error_handler(self.ctx.bot, error, item, interaction)
+
     async def start(self, **kwargs) -> Message:
         for child in self.children:
             if child.emoji.name in self._what_to_disable():
@@ -275,7 +278,7 @@ class PaginatorView(View):
             kwargs.pop('embed', None)
             kwargs.pop('embeds', None)
             _resp = await self.ctx.freply(embed=self._pages[0], view=self, **kwargs)
-        
+
         self._interaction_message = _resp
         return _resp
 
