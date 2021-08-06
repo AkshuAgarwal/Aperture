@@ -261,7 +261,7 @@ class PaginatorView(View):
         await self._interaction_message.edit(view=self)
 
     async def on_error(self, error: Exception, item: Item, interaction: Interaction) -> None:
-        await view_error_handler(self.ctx.bot, error, item, interaction)
+        await view_error_handler(self.ctx, error, item, interaction)
 
     async def start(self, **kwargs) -> Message:
         for child in self.children:

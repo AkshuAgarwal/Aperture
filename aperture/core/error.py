@@ -24,7 +24,6 @@ from typing import List, Tuple
 
 from discord import (
     HTTPException,
-    Interaction,
     InteractionResponded,
     NotFound
 )
