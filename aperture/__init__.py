@@ -43,6 +43,7 @@ from discord.ext import commands
 
 from aperture.core import ApertureContext, error_handler
 from aperture.core.error import SettingsError
+from aperture.management import ErrorLogger
 
 
 log = logging.getLogger(__name__)
@@ -80,6 +81,7 @@ class ApertureBot(commands.Bot):
         self.version: Optional[str] = None
         self.aiohttp_session: Optional[aiohttp.ClientSession] = None
         self.pool: Optional[asyncpg.Pool] = None
+        self.error_log_webhook: Optional[ErrorLogger] = None
 
         self.launch_time: datetime = datetime.utcnow()
         self.message_edit_timeout: int = 120
@@ -97,7 +99,6 @@ class ApertureBot(commands.Bot):
             log.critical('Settings file is not configured properly')
             raise SettingsError
 
-
     async def create_pool(self, loop: asyncio.AbstractEventLoop) -> asyncpg.Pool:
         self.pool: asyncpg.Pool = await asyncpg.create_pool(
             host=os.getenv('DB_HOST'),
@@ -111,7 +112,6 @@ class ApertureBot(commands.Bot):
         )
         log.info('Created Database Pool')
         return self.pool
-
 
     @staticmethod
     def _get_case_insensitive_prefixes(prefix: str) -> List[str]:
@@ -165,10 +165,6 @@ class ApertureBot(commands.Bot):
                             message.id, message.author.id, message.channel.id, message.guild.id)
                         return self._get_case_insensitive_prefixes(default_prefix)
 
-
-    def setup(self) -> None:
-        self.load_extensions()
-
     def load_extensions(self) -> None:
         try:
             if settings['startup']['load-extensions-on-startup'] is True:
@@ -194,11 +190,14 @@ class ApertureBot(commands.Bot):
             log.critical('Settings file is not configured properly')
             raise SettingsError
 
-    def run(self, *args, **kwargs) -> None:
+    def initialise_before_run(self) -> None:
+        self.load_extensions()
+
+    def run(self, *_, **kwargs) -> None:
         self.version = kwargs.get('version', None)
 
         print('Setting Up...')
-        self.setup()
+        self.initialise_before_run()
 
         _token: str = os.getenv('TOKEN')
         print('Running the Bot...')
@@ -218,6 +217,26 @@ class ApertureBot(commands.Bot):
             await self.pool.close()
             log.debug('Closed Database connection')
 
+    async def on_ready(self) -> None:
+        print('Bot is Ready')
+        log.debug('Bot is Ready')
+
+    async def setup_backend(self):
+        self.error_log_webhook = ErrorLogger(webhook_url=os.getenv('ERROR_LOG_WEBHOOK'), session=self.aiohttp_session)
+
+    async def startup(self) -> None:
+        await self.wait_until_ready()
+        log.debug('Executing Startup function')
+        
+        await self.get_owner_info()
+        
+        self.aiohttp_session = aiohttp.ClientSession()
+        log.debug('Created aiohttp session')
+
+        await self.setup_backend()
+        log.debug('Backend setup completed')
+
+        self.ready = True
 
     async def on_connect(self) -> None:
         print(f'Connected to Bot. Latency: {round(self.latency*1000)} ms')
@@ -226,24 +245,6 @@ class ApertureBot(commands.Bot):
     async def on_disconnect(self) -> None:
         print('Bot Disconnnected')
         log.debug('Disconnected from Bot')
-
-    async def on_ready(self) -> None:
-        print('Bot is Ready')
-        log.debug('Bot is Ready')
-
-    async def startup(self) -> None:
-        await self.wait_until_ready()
-        await self.get_owner_info()
-        log.debug('Executing Startup function')
-        log.debug('Creating aiohttp session')
-        self.aiohttp_session = aiohttp.ClientSession()
-
-    async def get_owner_info(self) -> None:
-        _app_info = await self.application_info()
-        if _app_info.team:
-            self.owner_ids: List[int] = [member.id for member in _app_info.team.members]
-        else:
-            self.owner_id: int = _app_info.owner.id
 
     async def on_command_error(self, ctx: ApertureContext, exc: Exception) -> None:
         if ctx.command.has_error_handler():
@@ -267,10 +268,12 @@ class ApertureBot(commands.Bot):
 
         return await super().wait_for(event, check=check, timeout=timeout)
 
-
     async def process_commands(self, message: Message) -> None:
         ctx = await self.get_context(message, cls=ApertureContext)
         if ctx.command is None:
+            return
+        if not self.ready and ctx.command is not None:
+            await message.reply("I'm currently setting up. Please wait for a few seconds...")
             return
         if isinstance(ctx.me, Member):
             p: Permissions = ctx.me.guild_permissions
@@ -289,7 +292,6 @@ class ApertureBot(commands.Bot):
                         "Use external emojis, View channel`\nMake sure I atleast have these permissions!"
                     )
         await self.invoke(ctx)
-
 
     async def on_message(self, message: Message) -> None:
         if message.author.bot:
@@ -333,6 +335,12 @@ class ApertureBot(commands.Bot):
             async with conn.transaction():
                 await conn.execute('DELETE FROM guild_data WHERE guild_id = $1;', guild.id)
 
+    async def get_owner_info(self) -> None:
+        _app_info = await self.application_info()
+        if _app_info.team:
+            self.owner_ids: List[int] = [member.id for member in _app_info.team.members]
+        else:
+            self.owner_id: int = _app_info.owner.id
 
     async def owner_only(self, ctx: ApertureContext) -> bool:
         return ctx.author.id in [self.owner_id] + list(self.owner_ids)

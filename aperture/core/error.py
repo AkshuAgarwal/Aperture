@@ -218,11 +218,13 @@ async def error_handler(ctx: ApertureContext, error: Exception):
         await ctx.freply(error.args[0])
 
     else:
-        with suppress(HTTPException):
-            await ctx.freply(f'Oops! Some error Occured...\n> Error: `{error}`')
-        print('Ignoring exception in command {}:'.format(ctx.command), file=sys.stderr)
-        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
-
+        exc_id = await ctx.bot.error_log_webhook.send(ctx, error)
+        with suppress(HTTPException, NotFound):
+            await ctx.freply(
+                "Oops! Some Unexpected Error Occured.\n"
+                "But don't Worry! I reported the Error to Developers to fix it.\n"
+                f"You can check the Status of the error with code: `{exc_id}` into the Support Server."
+            )
 
 async def view_error_handler(ctx: ApertureContext, error: Exception, *_):
     if isinstance(error, NotFound) and error.code == 10062 and error.text == 'Unknown Interaction':
