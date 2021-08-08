@@ -1,5 +1,5 @@
 import sys
-import uuid
+import time
 import traceback
 import aiohttp
 
@@ -21,8 +21,11 @@ class ErrorLogger:
         self.embed_desc_limit = 4096
         self.max_len = self.embed_desc_limit - (len(self.prefix) + len(self.suffix))
 
+    def generate_exc_id(self, user_id: int) -> str:
+        return hex(int(str(time.time()).replace('.', '') + str(user_id)))[2:]
+
     async def send(self, ctx: ApertureContext, error: Exception) -> str:
-        exc_id: str = uuid.uuid4().hex
+        exc_id = self.generate_exc_id(ctx.author.id)
         exc: str = f'Ignoring exception in command {ctx.command}:\n' + ''.join(traceback.format_exception(type(error), error, error.__traceback__))
         chunked: list = [self.prefix + exc[i:i+self.max_len] + self.suffix for i in range(0, len(exc), self.max_len)]
         _embeds: list = []
