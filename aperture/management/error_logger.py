@@ -25,9 +25,9 @@ class ErrorLogger:
         exc_id: str = uuid.uuid4().hex
         exc: str = f'Ignoring exception in command {ctx.command}:\n' + ''.join(traceback.format_exception(type(error), error, error.__traceback__))
         chunked: list = [self.prefix + exc[i:i+self.max_len] + self.suffix for i in range(0, len(exc), self.max_len)]
-        embeds: list = []
+        _embeds: list = []
 
-        embeds.append(
+        _embeds.append(
             ApertureEmbed.default(
                 ctx,
                 title='Unexpected Exception',
@@ -54,9 +54,14 @@ class ErrorLogger:
             )
         )
         for chunk in chunked:
-            embeds.append(ApertureEmbed.default(ctx, description=chunk, color=0xff0000))
+            _embeds.append(ApertureEmbed.default(ctx, description=chunk, color=0xff0000))
 
-        await self.webhook.send(username='Aperture Error Logger', avatar_url=ctx.me.avatar.url, embeds=embeds)
+        if len(_embeds) > 10:
+            for i in range(0, len(_embeds), 10):
+                await self.webhook.send(username='Aperture Error Logging', avatar_url=ctx.me.avatar.url, embeds=_embeds[i:i+10])
+        else:
+            await self.webhook.send(username='Aperture Error Logging', avatar_url=ctx.me.avatar.url, embeds=_embeds)
+
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
         return exc_id
