@@ -143,7 +143,9 @@ class ApertureBot(commands.Bot):
             return self._get_case_insensitive_prefixes(prefix)
         except KeyError:
             async with self.pool.acquire() as conn:
-                raw_data: List[asyncpg.Record] = await conn.fetch('SELECT * FROM guild_data;')
+                raw_data: List[asyncpg.Record] = await conn.fetch(
+                    'SELECT guild_id, prefix, prefix_case_insensitive FROM guild_prefixes;'
+                )
                 for row in raw_data:
                     self.prefixes[row['guild_id']] = [row['prefix'], row['prefix_case_insensitive']]
             try:
@@ -155,9 +157,9 @@ class ApertureBot(commands.Bot):
             except KeyError:
                 async with self.pool.acquire() as conn:
                     async with conn.transaction():
-                        await conn.execute('INSERT INTO guild_data (guild_id, prefix, prefix_case_insensitive) VALUES '
-                                            '($3, $1, $2) ON CONFLICT (guild_id) DO UPDATE SET prefix=EXCLUDED.prefix,'
-                                            ' prefix_case_insensitive=EXCLUDED.prefix_case_insensitive;',
+                        await conn.execute('INSERT INTO guild_prefixes (guild_id, prefix, prefix_case_insensitive) VALUES '
+                                            '($3, $1, $2) ON CONFLICT (guild_id) DO UPDATE SET prefix=EXCLUDED.prefix, '
+                                            'prefix_case_insensitive=EXCLUDED.prefix_case_insensitive;',
                                             default_prefix, True, message.guild.id)
                         log.warn(
                             'get_prefix unable to get prefix from any existing data and function\n'
