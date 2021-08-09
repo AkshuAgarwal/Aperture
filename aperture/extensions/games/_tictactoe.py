@@ -24,6 +24,15 @@ from discord.ui import button, Button, Item, View
 from aperture.core import ApertureContext, emoji, view_error_handler
 
 
+class Players(TypedDict):
+    player_x: Member
+    player_o: Member
+
+class Player(NamedTuple):
+    player_val: int
+    player: Member
+
+
 class TicTacToeButton(Button):
     def __init__(self, x: int, y: int) -> None:
         super().__init__(
@@ -70,22 +79,19 @@ class TicTacToeButton(Button):
 
         await interaction.response.edit_message(content=_description, view=view)
 
-
-class Players(TypedDict):
-    player_x: Member
-    player_o: Member
-
-class Player(NamedTuple):
-    player_val: int
-    player: Member
-
-
 class TicTacToeView(View):
     X: ClassVar[int] = 1
     O: ClassVar[int] = -1
     Tie: ClassVar[int] = 2
 
-    def __init__(self, ctx: ApertureContext, *, timeout: Optional[float] = 30.0, players: Players, response: Message) -> None:
+    def __init__(
+        self,
+        ctx: ApertureContext,
+        *,
+        timeout: Optional[float] = 30.0,
+        players: Players,
+        response: Message
+    ) -> None:
         super().__init__(timeout=timeout)
         self.ctx = ctx
         self._response = response
@@ -149,7 +155,10 @@ class TicTacToeView(View):
         self._players: List[Member] = [value for _, value in self._players.items() if value != self.cur_player[1]]
         for child in self.children:
             child.disabled = True
-        await self._response.edit(content=f':alarm_clock: {self.cur_player[1].mention} timed out responding...\nTherefore, {self._players[0].mention} Won! :tada:', view=self)
+        await self._response.edit(
+            content=f':alarm_clock: {self.cur_player[1].mention} timed out responding...\nTherefore, '\
+                f'{self._players[0].mention} Won! :tada:',
+            view=self)
 
     async def on_error(self, error: Exception, item: Item, interaction: Interaction) -> None:
         await view_error_handler(self.ctx, error, item, interaction)

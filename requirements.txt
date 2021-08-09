@@ -8,7 +8,7 @@ chardet==3.0.4
 git+git://github.com/Rapptz/discord.py@master#egg=discord.py # Discord.py 2.0 (Master)
 humanize==3.10.0
 idna==3.2
-jishaku==2.0.0
+git+git://github.com/Gorialis/jishaku/@master
 multidict==5.1.0
 python-dotenv==0.18.0
 pyyaml==5.4.1
