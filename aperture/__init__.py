@@ -138,7 +138,7 @@ class ApertureBot(commands.Bot):
 
         if isinstance(message.channel, DMChannel):
             return commands.when_mentioned_or(
-                self._get_case_insensitive_prefixes(default_prefix)
+                *self._get_case_insensitive_prefixes(default_prefix)
             )(self, message)
         try:
             data: List[str, bool] = self.prefixes[message.guild.id]
@@ -146,7 +146,7 @@ class ApertureBot(commands.Bot):
             if data[1] is False:
                 return commands.when_mentioned_or(prefix)(self, message)
             return commands.when_mentioned_or(
-                self._get_case_insensitive_prefixes(prefix)
+                *self._get_case_insensitive_prefixes(prefix)
             )(self, message)
         except KeyError:
             async with self.pool.acquire() as conn:
@@ -161,7 +161,7 @@ class ApertureBot(commands.Bot):
                 if data[1] is False:
                     return commands.when_mentioned_or(prefix)(self, message)
                 return commands.when_mentioned_or(
-                    self._get_case_insensitive_prefixes(prefix)
+                    *self._get_case_insensitive_prefixes(prefix)
                 )(self, message)
             except KeyError:
                 async with self.pool.acquire() as conn:
@@ -177,7 +177,7 @@ class ApertureBot(commands.Bot):
                             'Message ID: %s, Author ID: %s, Channel ID: %s, Guild ID: %s',
                             message.id, message.author.id, message.channel.id, message.guild.id)
                         return commands.when_mentioned_or(
-                            self._get_case_insensitive_prefixes(default_prefix)
+                            *self._get_case_insensitive_prefixes(default_prefix)
                         )(self, message)
 
     def load_extensions(self) -> None:
