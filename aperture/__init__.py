@@ -32,6 +32,7 @@ import yaml
 from dotenv import load_dotenv
 
 from discord import (
+    AllowedMentions,
     DMChannel,
     Guild,
     Intents,
@@ -68,7 +69,9 @@ if sys.version_info[:2] in [(3, 8), (3, 9)] and sys.platform.startswith('win'):
 
 class ApertureBot(commands.Bot):
     def __init__(self) -> None:
+        allowed_mentions = AllowedMentions(everyone=False, users=True, roles=False, replied_user=True)
         super().__init__(
+            allowed_mentions=allowed_mentions,
             case_insensitive=True,
             command_prefix=self.get_prefix,
             description='Aperture is a Multi-Purpose and super '\
@@ -128,19 +131,23 @@ class ApertureBot(commands.Bot):
 
     async def get_prefix(self, message: Message) -> Union[List[str], str]:
         try:
-            default_prefix: str = settings['bot']['default-prefix'] or 'ap!'
+            default_prefix: str = settings['bot']['default-prefix']
         except KeyError:
             log.critical('Settings file is not configured properly')
             raise SettingsError
 
         if isinstance(message.channel, DMChannel):
-            return self._get_case_insensitive_prefixes(default_prefix)
+            return commands.when_mentioned_or(
+                self._get_case_insensitive_prefixes(default_prefix)
+            )(self, message)
         try:
             data: List[str, bool] = self.prefixes[message.guild.id]
             prefix: str = data[0]
             if data[1] is False:
-                return prefix
-            return self._get_case_insensitive_prefixes(prefix)
+                return commands.when_mentioned_or(prefix)(self, message)
+            return commands.when_mentioned_or(
+                self._get_case_insensitive_prefixes(prefix)
+            )(self, message)
         except KeyError:
             async with self.pool.acquire() as conn:
                 raw_data: List[asyncpg.Record] = await conn.fetch(
@@ -152,24 +159,30 @@ class ApertureBot(commands.Bot):
                 data: List[str, bool] = self.prefixes[message.guild.id]
                 prefix: str = data[0]
                 if data[1] is False:
-                    return prefix
-                return self._get_case_insensitive_prefixes(prefix)
+                    return commands.when_mentioned_or(prefix)(self, message)
+                return commands.when_mentioned_or(
+                    self._get_case_insensitive_prefixes(prefix)
+                )(self, message)
             except KeyError:
                 async with self.pool.acquire() as conn:
                     async with conn.transaction():
-                        await conn.execute('INSERT INTO guild_prefixes (guild_id, prefix, prefix_case_insensitive) VALUES '
-                                            '($3, $1, $2) ON CONFLICT (guild_id) DO UPDATE SET prefix=EXCLUDED.prefix, '
-                                            'prefix_case_insensitive=EXCLUDED.prefix_case_insensitive;',
-                                            default_prefix, True, message.guild.id)
+                        await conn.execute(
+                            'INSERT INTO guild_prefixes (guild_id, prefix, prefix_case_insensitive) VALUES '
+                            '($3, $1, $2) ON CONFLICT (guild_id) DO UPDATE SET prefix=EXCLUDED.prefix, '
+                            'prefix_case_insensitive=EXCLUDED.prefix_case_insensitive;',
+                            default_prefix, True, message.guild.id
+                        )
                         log.warn(
                             'get_prefix unable to get prefix from any existing data and function\n'
                             'Message ID: %s, Author ID: %s, Channel ID: %s, Guild ID: %s',
                             message.id, message.author.id, message.channel.id, message.guild.id)
-                        return self._get_case_insensitive_prefixes(default_prefix)
+                        return commands.when_mentioned_or(
+                            self._get_case_insensitive_prefixes(default_prefix)
+                        )(self, message)
 
     def load_extensions(self) -> None:
         try:
-            if settings['startup']['load-extensions-on-startup'] is True:
+            if settings['startup']['load-extensions'] is True:
                 for ext in os.listdir('./aperture/extensions'):
                     self.load_extension(f'aperture.extensions.{ext}')
                     print(f'+[EXTENSION] -- {ext}')
@@ -223,7 +236,7 @@ class ApertureBot(commands.Bot):
         print('Bot is Ready')
         log.debug('Bot is Ready')
 
-    async def setup_backend(self):
+    async def setup_backend(self) -> None:
         self.error_log_webhook = ErrorLogger(webhook_url=os.getenv('ERROR_LOG_WEBHOOK'), session=self.aiohttp_session)
 
     async def startup(self) -> None:
@@ -288,32 +301,28 @@ class ApertureBot(commands.Bot):
                 p.view_channel,
             ]):
                 with suppress(Exception):
-                    return await ctx.reply(
+                    await ctx.reply(
                         "I'm Missing minimum permissions I require to be operated in a Guild.\n"
                         "> Permissions I require: `Add reactions, Embed Links, Read message history, Send messages, "
                         "Use external emojis, View channel`\nMake sure I atleast have these permissions!"
                     )
+                    return
         await self.invoke(ctx)
 
     async def on_message(self, message: Message) -> None:
-        if message.author.bot:
-            return
-        await self.process_commands(message)
+        if not message.author.bot:
+            await self.process_commands(message)
 
     async def on_message_edit(self, before: Message, after: Message) -> None:
-        if after.author.bot or before.content == after.content:
-            return
-        if (after.edited_at - before.created_at).seconds > self.message_edit_timeout:
-            return
-        await self.process_commands(after)
+        if not after.author.bot and (after.created_at - before.created_at).seconds <= self.message_edit_timeout:
+            await self.process_commands(after)
 
     async def on_message_delete(self, message: Message) -> None:
-        if message.author.bot:
-            return
-        with suppress(Exception):
-            bot_response: Message = self.old_responses[message.id]
-            await bot_response.delete()
-            self.old_responses.pop(message.id, None)
+        if not message.author.bot:
+            with suppress(Exception):
+                bot_response: Message = self.old_responses[message.id]
+                await bot_response.delete()
+                self.old_responses.pop(message.id, None)
 
     async def on_command_completion(self, ctx) -> None:
         await asyncio.sleep(self.message_edit_timeout)
@@ -321,7 +330,7 @@ class ApertureBot(commands.Bot):
 
     async def on_guild_join(self, guild: Guild) -> None:
         try:
-            default_prefix = settings['bot']['default-prefix'] or 'ap!'
+            default_prefix = settings['bot']['default-prefix']
         except KeyError:
             log.critical('Settings file is not configured properly')
             raise SettingsError
