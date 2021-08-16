@@ -21,7 +21,7 @@ from typing import ClassVar, List, Optional, TypedDict, NamedTuple
 from discord import ButtonStyle, Interaction, Member, Message
 from discord.ui import button, Button, Item, View
 
-from aperture.core import ApertureContext, emoji, view_error_handler
+from aperture.core import ApertureContext, ApertureEmoji, view_error_handler
 
 
 class Players(TypedDict):
@@ -38,7 +38,7 @@ class TicTacToeButton(Button):
         super().__init__(
             style=ButtonStyle.blurple,
             label='\u200b',
-            emoji=emoji.invisible,
+            emoji=ApertureEmoji.invisible,
             row=y
         )
         self.x = x
@@ -49,7 +49,7 @@ class TicTacToeButton(Button):
 
         if view.cur_player[0] == view.X:
             self.style = ButtonStyle.danger
-            self.emoji = emoji.tttx
+            self.emoji = ApertureEmoji.tttx
             self.disabled = True
             view.board[self.y][self.x] = view.X
             view.cur_player = view.O, view._players['player_o']
@@ -57,7 +57,7 @@ class TicTacToeButton(Button):
 
         elif view.cur_player[0] == view.O:
             self.style = ButtonStyle.success
-            self.emoji = emoji.ttto
+            self.emoji = ApertureEmoji.ttto
             self.disabled = True
             view.board[self.y][self.x] = view.O
             view.cur_player = view.X, view._players['player_x']
@@ -170,10 +170,10 @@ class RequestToPlayView(View):
         self._player_list = player_list
         self.response: Optional[Message] = None
 
-    @button(label='Join', style=ButtonStyle.success, emoji=emoji.door)
+    @button(label='Join', style=ButtonStyle.success, emoji=ApertureEmoji.door)
     async def _join_button(self, _, interaction: Interaction) -> None:
         self._player_list['player_o'] = interaction.user
-        await interaction.response.send_message(content=f'{emoji.greenTick} Joined the Match!', ephemeral=True)
+        await interaction.response.send_message(content=f'{ApertureEmoji.green_tick} Joined the Match!', ephemeral=True)
         self.stop()
 
     async def interaction_check(self, interaction: Interaction) -> bool:
@@ -194,13 +194,13 @@ class ConfirmationView(View):
         self.state: Optional[bool] = None
         self.response: Optional[Message] = None
 
-    @button(label='Yes', style=ButtonStyle.success, emoji=emoji.yes)
+    @button(label='Yes', style=ButtonStyle.success, emoji=ApertureEmoji.yes)
     async def _button_yes(self, _, interaction: Interaction) -> None:
         self.state = True
-        await interaction.response.send_message(f'{emoji.greenTick} Joined the Match!', ephemeral=True)
+        await interaction.response.send_message(f'{ApertureEmoji.green_tick} Joined the Match!', ephemeral=True)
         self.stop()
 
-    @button(label='No', style=ButtonStyle.danger, emoji=emoji.no)
+    @button(label='No', style=ButtonStyle.danger, emoji=ApertureEmoji.no)
     async def _button_no(self, *_) -> None:
         self.state = False
         self.stop()

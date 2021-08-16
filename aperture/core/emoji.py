@@ -1,6 +1,6 @@
 class ApertureEmoji:
-    greenTick = '<:tick:795701213559390300>'
-    redCross = '<:do:795701401178341427>'
+    green_tick = '<:tick:795701213559390300>'
+    red_cross = '<:do:795701401178341427>'
     invisible = '<:Blank:869147633904680960>'
     yes = '<:Yes:869159026439647252>'
     no = '<:No:869159197093294090>'
@@ -15,5 +15,3 @@ class ApertureEmoji:
     pag_jump_to = '\U0001f522'
     pag_delete = '\U0001f5d1'
     pag_page_no = '\U0001f4c4'
-
-emoji = ApertureEmoji()

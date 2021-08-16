@@ -30,7 +30,7 @@ from discord import (
 )
 from discord.ui import Item, View, button
 
-from aperture.core import ApertureContext, emoji, view_error_handler
+from aperture.core import ApertureContext, ApertureEmoji, view_error_handler
 from aperture.core.error import ConflictingArguments, MissingAllArguments
 
 
@@ -135,7 +135,7 @@ class PaginatorView(View):
         self._current_index: int = 0
         self._interaction_message: Optional[Message] = None
 
-    @button(style=ButtonStyle.blurple, emoji=emoji.pag_toStart)
+    @button(style=ButtonStyle.blurple, emoji=ApertureEmoji.pag_toStart)
     async def _start(self, _, interaction: Interaction) -> None:
         for child in self.children:
             child.disabled = False
@@ -152,7 +152,7 @@ class PaginatorView(View):
         except suppressed_errors:
             self.stop()
 
-    @button(style=ButtonStyle.blurple, emoji=emoji.pag_backward)
+    @button(style=ButtonStyle.blurple, emoji=ApertureEmoji.pag_backward)
     async def _backward(self, _, interaction: Interaction) -> None:
         for child in self.children:
             child.disabled = False
@@ -169,7 +169,7 @@ class PaginatorView(View):
         except suppressed_errors:
             self.stop()
 
-    @button(style=ButtonStyle.blurple, emoji=emoji.pag_stop)
+    @button(style=ButtonStyle.blurple, emoji=ApertureEmoji.pag_stop)
     async def _stop(self, _, interaction: Interaction) -> None:
         for child in self.children:
             child.disabled = True
@@ -177,7 +177,7 @@ class PaginatorView(View):
             await interaction.message.edit(view=self)
         self.stop()
 
-    @button(style=ButtonStyle.blurple, emoji=emoji.pag_forward)
+    @button(style=ButtonStyle.blurple, emoji=ApertureEmoji.pag_forward)
     async def _forward(self, _, interaction: Interaction) -> None:
         for child in self.children:
             child.disabled = False
@@ -194,7 +194,7 @@ class PaginatorView(View):
         except suppressed_errors:
             self.stop()
 
-    @button(style=ButtonStyle.blurple, emoji=emoji.pag_toEnd)
+    @button(style=ButtonStyle.blurple, emoji=ApertureEmoji.pag_toEnd)
     async def _end(self, _, interaction: Interaction) -> None:
         for child in self.children:
             child.disabled = False
@@ -211,7 +211,7 @@ class PaginatorView(View):
         except suppressed_errors:
             self.stop()
 
-    @button(style=ButtonStyle.blurple, emoji=emoji.pag_jump_to)
+    @button(style=ButtonStyle.blurple, emoji=ApertureEmoji.pag_jump_to)
     async def _jump_to(self, _, interaction: Interaction) -> None:
         await interaction.response.send_message("Which page would you like to Jump to?", ephemeral=True)
         _request: Message = await self.ctx.bot.wait_for(
@@ -242,11 +242,11 @@ class PaginatorView(View):
         except suppressed_errors:
             self.stop()
 
-    @button(style=ButtonStyle.secondary, emoji=emoji.pag_page_no, disabled=True)
+    @button(style=ButtonStyle.secondary, emoji=ApertureEmoji.pag_page_no, disabled=True)
     async def _page_no(self, *_) -> None:
         ...
 
-    @button(style=ButtonStyle.danger, label='Delete', emoji=emoji.pag_delete)
+    @button(style=ButtonStyle.danger, label='Delete', emoji=ApertureEmoji.pag_delete)
     async def _delete(self, _, interaction: Interaction) -> None:
         with suppress(suppressed_errors):
             await interaction.message.delete()
@@ -284,30 +284,30 @@ class PaginatorView(View):
 
     def update_page_no(self) -> None:
         for child in self.children:
-            if child.emoji.name == emoji.pag_page_no:
+            if child.emoji.name == ApertureEmoji.pag_page_no:
                 child.label = f'Page No. {self._current_index+1}/{len(self._pages)}'
 
     def _what_to_disable(self) -> List[str]:
         if len(self._pages) == 1:
-            disabled = [emoji.pag_toStart, emoji.pag_backward, emoji.pag_forward, emoji.pag_toEnd, emoji.pag_jump_to]
+            disabled = [ApertureEmoji.pag_toStart, ApertureEmoji.pag_backward, ApertureEmoji.pag_forward, ApertureEmoji.pag_toEnd, ApertureEmoji.pag_jump_to]
         elif len(self._pages) == 2:
-            disabled = [emoji.pag_toStart, emoji.pag_toEnd, emoji.pag_jump_to]
+            disabled = [ApertureEmoji.pag_toStart, ApertureEmoji.pag_toEnd, ApertureEmoji.pag_jump_to]
             if self._current_index == 0:
-                disabled.append(emoji.pag_backward)
+                disabled.append(ApertureEmoji.pag_backward)
             elif self._current_index == 1:
-                disabled.append(emoji.pag_forward)
+                disabled.append(ApertureEmoji.pag_forward)
         else:
             if self._current_index == 0:
-                disabled = [emoji.pag_toStart, emoji.pag_backward]
+                disabled = [ApertureEmoji.pag_toStart, ApertureEmoji.pag_backward]
             elif self._current_index == 1:
-                disabled = [emoji.pag_toStart]
+                disabled = [ApertureEmoji.pag_toStart]
             elif self._current_index == len(self._pages)-1:
-                disabled = [emoji.pag_toEnd, emoji.pag_forward]
+                disabled = [ApertureEmoji.pag_toEnd, ApertureEmoji.pag_forward]
             elif self._current_index == len(self._pages)-2:
-                disabled = [emoji.pag_toEnd]
+                disabled = [ApertureEmoji.pag_toEnd]
             else:
                 disabled = []
 
-        disabled.append(emoji.pag_page_no)
+        disabled.append(ApertureEmoji.pag_page_no)
 
         return disabled

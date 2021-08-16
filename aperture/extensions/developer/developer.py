@@ -26,7 +26,7 @@ from discord import Message
 from discord.ext import commands
 
 from aperture import ApertureBot
-from aperture.core import ApertureContext, emoji
+from aperture.core import ApertureContext, ApertureEmoji
 from ._views import ConfirmationView
 
 
@@ -70,7 +70,7 @@ extension_name: Name of the extension to be loaded. Extension names are delimite
                 with suppress(commands.ExtensionAlreadyLoaded):
                     self.bot.load_extension(f'aperture.extensions.{ext}')
                     log.debug(f'loaded {ext} on command.')
-            return await _response.edit(content=f'{emoji.greenTick} Loaded all unloaded Extensions', view=view)
+            return await _response.edit(content=f'{ApertureEmoji.green_tick} Loaded all unloaded Extensions', view=view)
         else:
             _extensions: list = extensions_name.split()
             _loaded_extensions: list = []
@@ -86,10 +86,10 @@ extension_name: Name of the extension to be loaded. Extension names are delimite
                     _failed_extensions[ext] = exc.__class__.__name__ + ': ' + str(exc)
             
             _success_fmt = str(
-                f'{emoji.greenTick} Loaded Extensions: ' + ', '.join(f'`{i}`' for i in _loaded_extensions) + '\n'
+                f'{ApertureEmoji.green_tick} Loaded Extensions: ' + ', '.join(f'`{i}`' for i in _loaded_extensions) + '\n'
             ) if _loaded_extensions else ''
             _failed_fmt = str(
-                f'{emoji.redCross} Failed Extensions:\n> ' + '\n> '.join(
+                f'{ApertureEmoji.red_cross} Failed Extensions:\n> ' + '\n> '.join(
                     f'`{k}`: `{v}`' for k, v in _failed_extensions.items()
                 )
             ) if _failed_extensions else ''
@@ -126,7 +126,7 @@ extension_name: Name of the extension to be unloaded. Extension names are delimi
                     with suppress(commands.ExtensionAlreadyLoaded):
                         self.bot.unload_extension(f'aperture.extensions.{ext}')
                         log.debug(f'unloaded {ext} on command.')
-            return await _response.edit(content=f'{emoji.greenTick} Unloaded all loaded Extensions', view=view)
+            return await _response.edit(content=f'{ApertureEmoji.green_tick} Unloaded all loaded Extensions', view=view)
         else:
             _extensions: list = extensions_name.split()
             _unloaded_extensions: list = []
@@ -142,10 +142,10 @@ extension_name: Name of the extension to be unloaded. Extension names are delimi
                     _failed_extensions[ext] = exc.__class__.__name__ + ': ' + str(exc)
                 
             _success_fmt = str(
-                f'{emoji.greenTick} Unloaded Extensions: ' + ', '.join(f'`{i}`' for i in _unloaded_extensions) + '\n'
+                f'{ApertureEmoji.green_tick} Unloaded Extensions: ' + ', '.join(f'`{i}`' for i in _unloaded_extensions) + '\n'
             ) if _unloaded_extensions else ''
             _failed_fmt = str(
-                f'{emoji.redCross} Failed Extensions:\n> ' + '\n> '.join(
+                f'{ApertureEmoji.red_cross} Failed Extensions:\n> ' + '\n> '.join(
                     f'`{k}`: `{v}`' for k, v in _failed_extensions.items()
                 )
             ) if _failed_extensions else ''
@@ -181,7 +181,7 @@ extension_name: Name of the extension to be reloaded. Extension names are delimi
                 with suppress(commands.ExtensionAlreadyLoaded):
                     self.bot.reload_extension(f'aperture.extensions.{ext}')
                     log.debug(f'reloaded {ext} on command.')
-            return await _response.edit(content=f'{emoji.greenTick} Reloaded all loaded Extensions', view=view)
+            return await _response.edit(content=f'{ApertureEmoji.green_tick} Reloaded all loaded Extensions', view=view)
         else:
             _extensions: list = extensions_name.split()
             _reloaded_extensions: list = []
@@ -197,10 +197,10 @@ extension_name: Name of the extension to be reloaded. Extension names are delimi
                     _failed_extensions[ext] = exc.__class__.__name__ + ': ' + str(exc)
                 
             _success_fmt = str(
-                f'{emoji.greenTick} Reloaded Extensions: ' + ', '.join(f'`{i}`' for i in _reloaded_extensions) + '\n'
+                f'{ApertureEmoji.green_tick} Reloaded Extensions: ' + ', '.join(f'`{i}`' for i in _reloaded_extensions) + '\n'
             ) if _reloaded_extensions else ''
             _failed_fmt = str(
-                f'{emoji.redCross} Failed Extensions:\n> ' + '\n> '.join(
+                f'{ApertureEmoji.red_cross} Failed Extensions:\n> ' + '\n> '.join(
                     f'`{k}`: `{v}`' for k, v in _failed_extensions.items()
                 )
             ) if _failed_extensions else ''

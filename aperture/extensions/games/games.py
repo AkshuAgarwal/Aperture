@@ -29,7 +29,7 @@ from ._tictactoe import (
 )
 
 from aperture import ApertureBot
-from aperture.core import emoji, ApertureContext
+from aperture.core import ApertureEmoji, ApertureContext
 from ._tictactoe import Players as TicTacToePlayers
 
 
@@ -72,7 +72,7 @@ member: The Guild Member you want to compete with. If not given, the Bot sends a
 
         else:
             if opponent.id == ctx.author.id:
-                return await ctx.freply(f"{emoji.redCross} You can't play with yourself...")
+                return await ctx.freply(f"{ApertureEmoji.red_cross} You can't play with yourself...")
             confirm_view = ConfirmationView(ctx, confirm_from=opponent)
             _resp: Message = await ctx.freply(
                 f'{opponent.mention}, Would you like to join a Match of Tic-Tac-Toe against {ctx.author.name}?',

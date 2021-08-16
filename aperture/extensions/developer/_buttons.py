@@ -1,7 +1,7 @@
 from discord import PartialEmoji, ButtonStyle
 from discord.ui import Button
 
-from aperture.core import emoji
+from aperture.core import ApertureEmoji
 
 
 class ConfirmButton(Button):
@@ -9,7 +9,7 @@ class ConfirmButton(Button):
         super().__init__(
             label='Confirm',
             style=ButtonStyle.success,
-            emoji=PartialEmoji.from_str(emoji.greenTick)
+            emoji=PartialEmoji.from_str(ApertureEmoji.green_tick)
         )
         
     async def callback(self, _) -> None:
@@ -23,7 +23,7 @@ class CancelButton(Button):
         super().__init__(
             label='Cancel',
             style=ButtonStyle.danger,
-            emoji=PartialEmoji.from_str(emoji.redCross)
+            emoji=PartialEmoji.from_str(ApertureEmoji.red_cross)
         )
         
     async def callback(self, _) -> None:
