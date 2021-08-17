@@ -222,8 +222,7 @@ async def error_handler(ctx: ApertureContext, error: Exception):
         with suppress(HTTPException, NotFound):
             await ctx.freply(
                 "Oops! Some Unexpected Error Occured.\n"
-                "But don't Worry! I reported the Error to Developers to fix it.\n"
-                f"You can check the Status of the error with code: `{exc_id}` into the Support Server."
+                f"I reported the Error to Developers with the Case ID: `{exc_id}` to fix it!"
             )
 
 async def view_error_handler(ctx: ApertureContext, error: Exception, *_):
