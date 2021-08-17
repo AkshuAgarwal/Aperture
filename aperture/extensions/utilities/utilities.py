@@ -37,7 +37,7 @@ class Utilities(commands.Cog):
         description='The command is used to get the Avatar of a user.',
         help="""The command returns the Avatar of the user with it's Download Links!
 
-user: The User whose Avatar is to be found. Defaults to command invoker.""",
+`user`: The User whose Avatar is to be found. Defaults to command invoker.""",
         usage='[user: User/Member, default=Command Invoker]'
     )
     @commands.cooldown(1, 10, commands.BucketType.user)

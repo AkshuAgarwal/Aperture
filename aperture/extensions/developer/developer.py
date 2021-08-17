@@ -48,7 +48,7 @@ class Developer(commands.Cog):
         help="""The Extension should be a Python File Only with valid Extension syntax and should not already be loaded.
 The Extension should be in the Proper directory in the bot's code as set by the Developer.
 
-extension_name: Name of the extension to be loaded. Extension names are delimited by Spaces. Leave it blank or use `--all` to load all unloaded extensions.""",
+`extension_name`: Name of the extension to be loaded. Extension names are delimited by Spaces. Leave it blank or use `--all` to load all unloaded extensions.""",
         usage='[extension_name:str, default=all]'
     )
     @commands.is_owner()
@@ -103,7 +103,7 @@ extension_name: Name of the extension to be loaded. Extension names are delimite
         help=f"""The Extension should be a Python File Only with valid Extension syntax and should already be loaded.
 The Extension should be in the Proper directory in the bot's code as set by the Developer.
 
-extension_name: Name of the extension to be unloaded. Extension names are delimited by Spaces. Leave it blank or use `--all` to unload all loaded extensions (`{'`, `'.join(i for i in _unload_restricted)}` extension(s) can only be unloaded by manually giving it as input).""",
+`extension_name`: Name of the extension to be unloaded. Extension names are delimited by Spaces. Leave it blank or use `--all` to unload all loaded extensions (`{'`, `'.join(i for i in _unload_restricted)}` extension(s) can only be unloaded by manually giving it as input).""",
         usage='[extension_name:str, default=all]'
     )
     @commands.is_owner()
@@ -159,7 +159,7 @@ extension_name: Name of the extension to be unloaded. Extension names are delimi
         help=f"""The Extension should be a Python File Only with valid Extension syntax and should already be loaded.
 The Extension should be in the Proper directory in the bot's code as set by the Developer.
 
-extension_name: Name of the extension to be reloaded. Extension names are delimited by Spaces. Leave it blank or use `--all` to reload all loaded extensions.""",
+`extension_name`: Name of the extension to be reloaded. Extension names are delimited by Spaces. Leave it blank or use `--all` to reload all loaded extensions.""",
         usage='[extension_name:str, default=all]'
     )
     @commands.is_owner()

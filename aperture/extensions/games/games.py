@@ -46,7 +46,7 @@ class Games(commands.Cog):
         description='The command is used to start a Match of TicTacToe between 2 players',
         help="""The command starts a match of Tic-Tac-Toe between 2 players in an interactive `button` mode.
 
-member: The Guild Member you want to compete with. If not given, the Bot sends a request message for someone to join the Match.""",
+`member`: The Guild Member you want to compete with. If not given, the Bot sends a request message for someone to join the Match.""",
         usage='[member: Member, default=Ask for someone to join]'
     )
     @commands.guild_only()

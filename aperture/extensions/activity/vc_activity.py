@@ -39,7 +39,7 @@ class Activity(commands.Cog):
         description="The command is used to create invite links to use Discord's Beta Party VC Games!",
         help="""The command returns an invite link to the selected channel which can be used to access the selected VC Game.
         
-voice_channel: The Voice Channel for which the link is to be created. Defaults to the Member's already joined Voice Channel (if any).""",
+`voice_channel`: The Voice Channel for which the link is to be created. Defaults to the Member's already joined Voice Channel (if any).""",
         usage="[voice_channel: VoiceChannel, default=Member's currently joined VC.]"
     )
     @commands.bot_has_guild_permissions(create_instant_invite=True)
