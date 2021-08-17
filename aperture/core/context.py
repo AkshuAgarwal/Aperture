@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from contextlib import suppress as sup
-from typing import List, Optional, Sequence, Union, overload
+from typing import Any, Dict, List, Optional, Sequence, Union, overload
 
 from discord import (
     AllowedMentions,
@@ -291,7 +291,7 @@ class ApertureContext(Context):
             self.bot.old_responses[self.message.id] = response
             return response
 
-    async def freply(self, content: Optional[str] = None, **kwargs) -> Message:
+    async def freply(self, content: Optional[str] = None, **kwargs: Dict[str, Any]) -> Message:
         """|coro|
         A shortcut method to :meth:`discord.abc.Messageable.fsend` to reply to the
         :class:`discord.Message`.
@@ -311,5 +311,13 @@ class ApertureContext(Context):
         :class:`discord.Message`
             The message that was sent.
         """
+        if not kwargs.get('mention_author', None):
+            kwargs['mention_author'] = False
 
         return await self.fsend(content, reference=self.message, **kwargs)
+
+    async def reply(self, content: Optional[str] = None, **kwargs: Dict[str, Any]):
+        if not kwargs.get('mention_author', None):
+            kwargs['mention_author'] = False
+
+        return await super().reply(content=content, **kwargs)
