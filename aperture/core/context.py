@@ -317,6 +317,25 @@ class ApertureContext(Context):
         return await self.fsend(content, reference=self.message, **kwargs)
 
     async def reply(self, content: Optional[str] = None, **kwargs: Dict[str, Any]):
+        """|coro|
+        A shortcut method to :meth:`.abc.Messageable.send` to reply to the
+        :class:`.Message`.
+        .. versionadded:: 1.6
+        Raises
+        --------
+        ~discord.HTTPException
+            Sending the message failed.
+        ~discord.Forbidden
+            You do not have the proper permissions to send the message.
+        ~discord.InvalidArgument
+            The ``files`` list is not of the appropriate size or
+            you specified both ``file`` and ``files``.
+        Returns
+        ---------
+        :class:`.Message`
+            The message that was sent.
+        """
+
         if not kwargs.get('mention_author', None):
             kwargs['mention_author'] = False
 
