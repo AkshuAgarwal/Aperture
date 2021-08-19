@@ -30,12 +30,14 @@ class Fun(commands.Cog):
         self.bot = bot
         self.description: str = """Some basic mini-games/fun commands to play with"""
 
+        self.snipes: dict = {}
+
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: Message) -> None:
         if message.content is None:
             return
-        self.bot.snipes[message.channel.id] = message
+        self.snipes[message.channel.id] = message
 
     
     @commands.command(
@@ -50,7 +52,7 @@ The command only returns messages with some content and will not save if the con
     @commands.cooldown(1, 10, commands.BucketType.channel)
     async def snipe(self, ctx: ApertureContext) -> Optional[Any]:
         try:
-            _message: Message = self.bot.snipes[ctx.channel.id]
+            _message: Message = self.snipes[ctx.channel.id]
             if not _message.content:
                 return await ctx.freply('No Sniped Messages found in this channel')
         except KeyError:

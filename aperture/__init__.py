@@ -90,7 +90,6 @@ class ApertureBot(commands.Bot):
         self.message_edit_timeout: int = 120
         self.old_responses: dict = {}
         self.prefixes: dict = {}
-        self.snipes: dict = {}
 
         self.loop.create_task(self.startup())
         self.loop.run_until_complete(self.create_pool(self.loop))
