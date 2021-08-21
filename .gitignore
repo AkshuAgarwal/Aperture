@@ -16,4 +16,5 @@ tmp
 # Other
 todo.txt
 debugging.py
-test.py
+test
+test.*
