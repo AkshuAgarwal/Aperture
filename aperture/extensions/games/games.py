@@ -50,6 +50,7 @@ class Games(commands.Cog):
         usage='[member: Member, default=Ask for someone to join]'
     )
     @commands.guild_only()
+    @commands.max_concurrency(10, commands.BucketType.guild)
     @commands.cooldown(1, 15, commands.BucketType.user)
     async def _tictactoe(self, ctx: ApertureContext, opponent: Optional[Member]=None) -> Optional[Any]:
         _players: TicTacToePlayers = {'player_x': ctx.author}
@@ -66,9 +67,9 @@ class Games(commands.Cog):
                 return
 
             await _resp.edit(
-                content=f'{_players["player_o"].mention} Joined! Starting the Match in 5 Seconds...', view=None
+                content=f'{_players["player_o"].mention} Joined! Starting the Match...', view=None
             )
-            await asyncio.sleep(5)
+            await asyncio.sleep(2.5)
 
         else:
             if opponent.id == ctx.author.id:
@@ -87,8 +88,8 @@ class Games(commands.Cog):
                 return await _resp.edit(content=f'{opponent.mention} refused to Join... :(', view=None)
             else:
                 _players['player_o'] = opponent
-                await _resp.edit(content=f'{opponent.mention} Joined! Starting the Match in 5 Seconds...', view=None)
-                await asyncio.sleep(5)
+                await _resp.edit(content=f'{opponent.mention} Joined! Starting the Match...', view=None)
+                await asyncio.sleep(2.5)
 
         _view = TicTacToeView(ctx, players=_players, response=_resp)
         return await _resp.edit(content=f"It's now {ctx.author.mention}'s Turn!", view=_view)
