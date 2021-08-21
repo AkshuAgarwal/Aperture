@@ -84,7 +84,7 @@ class CalculatorView(View):
 
     @button(label='CE')
     async def clear_entry(self, _, interaction: Interaction) -> None:
-        self._cache = []
+        self._cache = [0]
         self._cur_no = 0
         self._cur_ph = '0'
         await self.update_placeholder(interaction)
@@ -99,10 +99,7 @@ class CalculatorView(View):
     @button(label='(')
     async def parenthesis_left(self, _, interaction: Interaction) -> None:
         self._cur_no = 0
-        if isinstance(self._cache[-1:][0], str):
-            self._cache[-1:] = ['(']
-        else:
-            self._cache.append('(')
+        self._cache.append('(')
         self._cur_ph += '('
         await self.update_placeholder(interaction)
 
@@ -331,7 +328,9 @@ class CalculatorView(View):
         for index, key in enumerate(self._cache):
             if key in list(self._converter.keys()):
                 self._cache[index] = self._converter[key]
-    
+
+        if self._cache[-1:][0] == '*':
+            self._cache.pop()
         expression = ''.join(str(i) for i in self._cache)
         try:
             out = simpleeval.simple_eval(expression)

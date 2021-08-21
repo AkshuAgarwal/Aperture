@@ -70,6 +70,6 @@ class Applications(commands.Cog):
         space = '\u2002'
         total_len = 40
         _no = 0
-        embed = Embed(description=f'```{space*(total_len-len(str(_no)))}{_no}```', color=0x2F3136)
+        embed = Embed(description=f'```{space*(total_len-len(str(_no)))}{_no}```', color=0x2F3136).set_author(name=f"{ctx.author}'s Calculator", icon_url=ctx.author.avatar.url)
         view=CalculatorView(ctx)
-        view.response = await ctx.freply(embed=embed, view=view)
+        view.response = await ctx.freply(embed=embed, mention_author=True, view=view)
