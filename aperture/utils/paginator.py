@@ -258,7 +258,8 @@ class PaginatorView(View):
     async def on_timeout(self) -> None:
         for child in self.children:
             child.disabled = True
-        await self._interaction_message.edit(view=self)
+        with suppress(NotFound):
+            await self._interaction_message.edit(view=self)
 
     async def on_error(self, error: Exception, item: Item, interaction: Interaction) -> None:
         await view_error_handler(self.ctx, error, item, interaction)
