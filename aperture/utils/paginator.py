@@ -54,7 +54,7 @@ class Paginator:
     @overload
     def __init__(
         self,
-        content: str = ...,
+        content: Union[str, List[str]] = ...,
         *,
         prefix: Optional[str] = ...,
         suffix: Optional[str] = ...,
@@ -66,7 +66,7 @@ class Paginator:
     def __init__(
         self,
         embeds: Optional[List[Embed]] = None,
-        content: Optional[str] = None,
+        content: Optional[Union[str, List[str]]] = None,
         *,
         prefix: Optional[str] = '```',
         suffix: Optional[str] = '```',
@@ -74,6 +74,11 @@ class Paginator:
         timeout: Optional[float] = 60.0
     ) -> None:
         self.timeout = timeout
+
+        if not prefix:
+            prefix = ''
+        if not suffix:
+            suffix = ''
 
         if not embeds and not content:
             raise MissingAllArguments(['embeds', 'content'])
@@ -83,8 +88,13 @@ class Paginator:
         if embeds:
             self._pages = embeds
         else:
-            _page_length = max_length - (len(prefix) + len(suffix))
-            self._pages = [prefix + content[i:i+_page_length] + suffix for i in range(0, len(content), _page_length)]
+            if isinstance(content, str):
+                _page_length = max_length - (len(prefix) + len(suffix))
+                self._pages = [prefix + content[i:i+_page_length] + suffix for i in range(0, len(content), _page_length)]
+            elif isinstance(content, list):
+                self._pages = [prefix + i + suffix for i in content]
+            else:
+                raise TypeError(f'content should be of type str or list and not {content.__class__!r}')
 
     async def start(self, ctx: ApertureContext, **kwargs) -> Message:
         view = PaginatorView(ctx, pages=self._pages, timeout=self.timeout)
