@@ -211,7 +211,7 @@ class ConfirmationView(View):
     async def on_timeout(self) -> None:
         for child in self.children:
             child.disabled = True
-        await self.response.edit(content=f"{self.opponent.name} didn't responded...", view=self)
+        await self.response.edit(content=f"{self.opponent.name} didn't respond...", view=self)
 
     async def on_error(self, error: Exception, item: Item, interaction: Interaction) -> None:
         await view_error_handler(self.ctx, error, item, interaction)
