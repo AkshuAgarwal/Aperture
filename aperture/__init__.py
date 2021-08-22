@@ -80,6 +80,8 @@ class ApertureBot(commands.Bot):
             strip_after_prefix=True,
         )
 
+        self._BotBase__cogs = commands.core._CaseInsensitiveDict()
+
         self.ready: bool = False
         self.version: Optional[str] = None
         self.aiohttp_session: Optional[aiohttp.ClientSession] = None
