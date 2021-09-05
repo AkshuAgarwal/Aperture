@@ -132,7 +132,7 @@ class Snekbox:
             error = 'A fatal NsJail error occured'
         else:
             try:
-                name = signal.Signals(returncode - 128)
+                name = signal.Signals(returncode - 128).name
                 response = f'{response} ({name})'
             except ValueError:
                 pass
