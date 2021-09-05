@@ -1,7 +1,0 @@
-startup:
-  load-jishaku: true
-  load-extensions-on-startup: true
-
-bot:
-  default-prefix: "ap!"
-  owner-only: false

@@ -1,5 +1,23 @@
-CREATE TABLE IF NOT EXISTS guild_prefixes (
-    guild_id NUMERIC NOT NULL PRIMARY KEY,
-    prefix VARCHAR(5) NOT NULL,
-    prefix_case_insensitive BOOLEAN NOT NULL
+CREATE TABLE IF NOT EXISTS "prefixes" (
+    "guild_id" BIGINT NOT NULL PRIMARY KEY,
+    "prefix" VARCHAR(10) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS "guilds_core" (
+    "guild_id" BIGINT NOT NULL PRIMARY KEY,
+    "blacklisted" BOOLEAN NOT NULL DEFAULT FALSE,
+    "premium" BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS "users_core" (
+    "user_id" BIGINT NOT NULL PRIMARY KEY,
+    "blacklisted" BOOLEAN NOT NULL DEFAULT FALSE,
+    "premium" BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS "command_stats" (
+    "name" VARCHAR(20) NOT NULL,
+    "type" SMALLINT NOT NULL,
+    "user_id" BIGINT NOT NULL,
+    "guild_id" BIGINT DEFAULT NULL
 );

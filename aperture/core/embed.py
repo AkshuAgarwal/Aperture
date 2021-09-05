@@ -16,12 +16,21 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from datetime import datetime
-from typing import Optional, Union
+from __future__ import annotations
+from typing import Any, Optional, Union, TYPE_CHECKING
 
-from discord import Colour, Embed
-from discord.embeds import _EmptyEmbed, EmptyEmbed
-from discord.ext.commands import Context
+import datetime
+
+from discord import Embed, Colour
+from discord.embeds import EmptyEmbed
+
+from ..core import constants
+
+if TYPE_CHECKING:
+    from discord.embeds import _EmptyEmbed, MaybeEmpty
+    from discord.types.embed import EmbedType
+
+    from .context import ApertureContext
 
 
 class ApertureEmbed(Embed):
@@ -30,11 +39,11 @@ class ApertureEmbed(Embed):
         *,
         colour: Union[int, Colour, _EmptyEmbed] = EmptyEmbed,
         color: Union[int, Colour, _EmptyEmbed] = EmptyEmbed,
-        title = EmptyEmbed,
-        type = 'rich',
-        url = EmptyEmbed,
-        description = EmptyEmbed,
-        timestamp: datetime = None,
+        title: MaybeEmpty[Any] = EmptyEmbed,
+        type: EmbedType = 'rich',
+        url: MaybeEmpty[Any] = EmptyEmbed,
+        description: MaybeEmpty[Any] = EmptyEmbed,
+        timestamp: Optional[datetime.datetime] = None
     ):
         super().__init__(
             colour=colour, color=color, title=title, type=type, url=url, description=description, timestamp=timestamp
@@ -43,33 +52,36 @@ class ApertureEmbed(Embed):
     @classmethod
     def default(
         cls,
-        context: Context,
+        context: ApertureContext,
         *,
         colour: Union[int, Colour, _EmptyEmbed] = EmptyEmbed,
         color: Union[int, Colour, _EmptyEmbed] = EmptyEmbed,
-        title = EmptyEmbed,
-        type = 'rich',
-        url = EmptyEmbed,
-        description = EmptyEmbed,
-        timestamp: Optional[datetime] = None,
-    ) -> Embed:
+        title: MaybeEmpty[Any] = EmptyEmbed,
+        type: EmbedType = 'rich',
+        url: MaybeEmpty[Any] = EmptyEmbed,
+        description: MaybeEmpty[Any] = EmptyEmbed,
+        timestamp: Optional[datetime.datetime] = None
+    ):
         if color is EmptyEmbed and colour is EmptyEmbed:
-            _color: int = 0x0CE6F5
+            _color = constants.EMBED_DEFAULT_COLOR
         elif color is not EmptyEmbed and colour is not EmptyEmbed:
-            _color = color
+            _color = colour
         else:
             _color = color if color is not EmptyEmbed else colour
 
-        _timestamp: datetime = timestamp or datetime.now()
+        _timestamp: datetime.datetime = timestamp or datetime.datetime.now()
 
-        _embed = cls(
-            color=_color,
-            title=title,
-            type=type,
-            url=url,
-            description=description,
-            timestamp=_timestamp
+        embed = cls(
+            color = _color,
+            title = title,
+            type = type,
+            url = url,
+            description = description,
+            timestamp = _timestamp
+        ).set_author(
+            name=context.author, icon_url=context.author.display_avatar
+        ).set_footer(
+            text=f'Thanks for using {context.me.name}', icon_url=context.me.display_avatar
         )
-        _embed.set_author(name=context.author, icon_url=context.author.avatar.url)
-        _embed.set_footer(text=f'Thanks for using {context.me.name}', icon_url=context.me.avatar.url)
-        return _embed
+
+        return embed

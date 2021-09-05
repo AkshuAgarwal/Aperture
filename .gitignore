@@ -1,20 +1,23 @@
-# Environment
+# Environments
 .env
 venv
+*venv
+aperture-venv
 
 # Cache
-__pycache__
 *.pyc
+__pycache__
 
-# Log Files
+# Logs
 tmp
 *.log
+aperture.log
 
 # IDE
 .vscode
 
 # Other
+todo
 todo.txt
-debugging.py
 test
 test.*
