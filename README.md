@@ -1,4 +1,4 @@
 # Aperture
 A Multi-Functional Discord Bot written in Python using discord.py!
 
-## Closed!
+## Will be updated later...
