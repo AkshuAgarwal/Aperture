@@ -20,6 +20,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List
 
 import asyncpg
+from collections import UserList
 import contextlib
 import logging
 
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
 log = logging.getLogger('aperture.core.cache')
 
 
-class GuildPremium(list):
+class GuildPremium(UserList):
     def __init__(self, bot: ApertureBot) -> None:
         super().__init__()
         self.bot = bot
@@ -43,7 +44,7 @@ class GuildPremium(list):
             'ON CONFLICT (guild_id) DO UPDATE SET premium=true;'
         await self.bot.database.execute(query, guild.id)
 
-        super().append(guild.id)
+        self.data.append(guild.id)
 
         log.debug('Added guild with ID: %s to premium list', guild.id)
 
@@ -52,25 +53,25 @@ class GuildPremium(list):
         await self.bot.database.execute(query, guild.id)
         
         with contextlib.suppress(ValueError):
-            super().remove(guild.id)
+            self.data.remove(guild.id)
 
         log.debug('Removed guild with ID: %s from premium list', guild.id)
 
 
-class UserPremium(list):
+class UserPremium(UserList):
     def __init__(self, bot: ApertureBot) -> None:
         super().__init__()
         self.bot = bot
 
     async def insert(self, user: abc.Snowflake) -> None:
-        if user.id in self:
+        if user.id in self.data:
             raise error.PremiumBlacklisted(user.id)
 
         query = 'INSERT INTO users_core (user_id, blacklisted, premium) VALUES ($1, false, true) '\
             'ON CONFLICT (user_id) DO UPDATE SET premium=true;'
         await self.bot.database.execute(query, user.id)
 
-        super().append(user.id)
+        self.data.append(user.id)
 
         log.debug('Added user with ID: %s to premium list', user.id)
 
@@ -79,7 +80,7 @@ class UserPremium(list):
         await self.bot.database.execute(query, user.id)
         
         with contextlib.suppress(ValueError):
-            super().remove(user.id)
+            self.data.remove(user.id)
 
         log.debug('Removed user with ID: %s from premium list', user.id)
 

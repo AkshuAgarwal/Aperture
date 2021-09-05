@@ -20,6 +20,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List
 
 import asyncpg
+from collections import UserList
 import contextlib
 import logging
 
@@ -32,7 +33,7 @@ if TYPE_CHECKING:
 log = logging.getLogger('aperture.core.cache')
 
 
-class GuildBlacklist(list):
+class GuildBlacklist(UserList):
     def __init__(self, bot: ApertureBot) -> None:
         super().__init__()
         self.bot = bot
@@ -42,7 +43,7 @@ class GuildBlacklist(list):
             'ON CONFLICT (guild_id) DO UPDATE SET blacklisted=true;'
         await self.bot.database.execute(query, guild.id)
 
-        super().append(guild.id)
+        self.data.append(guild.id)
 
         log.debug('Blacklisted guild with ID: %s', guild.id)
 
@@ -51,12 +52,12 @@ class GuildBlacklist(list):
         await self.bot.database.execute(query, guild.id)
         
         with contextlib.suppress(ValueError):
-            super().remove(guild.id)
+            self.data.remove(guild.id)
 
         log.debug('Removed blacklist from guild with ID: %s', guild.id)
 
 
-class UserBlacklist(list):
+class UserBlacklist(UserList):
     def __init__(self, bot: ApertureBot) -> None:
         super().__init__()
         self.bot = bot
@@ -66,7 +67,7 @@ class UserBlacklist(list):
             'ON CONFLICT (user_id) DO UPDATE SET blacklisted=true;'
         await self.bot.database.execute(query, user.id)
 
-        super().append(user.id)
+        self.data.append(user.id)
 
         log.debug('Blacklisted user with ID: %s', user.id)
 
@@ -75,7 +76,7 @@ class UserBlacklist(list):
         await self.bot.database.execute(query, user.id)
         
         with contextlib.suppress(ValueError):
-            super().remove(user.id)
+            self.data.remove(user.id)
 
         log.debug('Removed blacklist from user with ID: %s', user.id)
 

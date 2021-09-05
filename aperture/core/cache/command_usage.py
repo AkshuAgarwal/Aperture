@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 from typing import List, Optional, Tuple, TYPE_CHECKING
 
+from collections import UserList
 import logging
 
 from discord import abc
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 log = logging.getLogger('aperture.core.cache')
 
 
-class CommandUsage(list):
+class CommandUsage(UserList):
     """``Note``: This list contains only the statistics of last 30 seconds since we run a task
     which put the statistics into the Database after every 30 seconds and clears the cache
     for memory optimisation and persistency.
@@ -48,7 +49,7 @@ class CommandUsage(list):
         user: abc.Snowflake,
         guild: Optional[abc.Snowflake]
     ):
-        super().append(
+        self.data.append(
             {
                 'name': command.name,
                 'type': command_type,
@@ -59,11 +60,11 @@ class CommandUsage(list):
 
     @tasks.loop(seconds=30)
     async def dump_in_database(self):
-        if self:
+        if self.data:
             # Make a copy of the dict and instantly clear the original to prevent 
             # inconsistency of stats because of time taken by database
-            stats = self
-            super().clear()
+            stats = self.data
+            self.data.clear()
 
             values: List[Tuple[str, int, int, Optional[int]]] = []
             for usage in stats:

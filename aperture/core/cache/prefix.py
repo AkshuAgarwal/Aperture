@@ -19,8 +19,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 from typing import List, Optional, TYPE_CHECKING
 
-import logging
 import asyncpg
+from collections import UserDict
+import logging
 
 from discord import abc
 
@@ -31,21 +32,21 @@ if TYPE_CHECKING:
 log = logging.getLogger('aperture.core.cache')
 
 
-class Prefix(dict):
+class Prefix(UserDict):
     def __init__(self, bot: ApertureBot) -> None:
         super().__init__()
         self.bot = bot
 
     async def get_or_fetch(self, guild: abc.Snowflake) -> Optional[str]:
-        prefix = super().get(guild.id)
+        prefix = self.data.get(guild.id)
         if prefix:
             return prefix
 
         query = 'SELECT * FROM prefixes WHERE guild_id=$1;'
-        data: asyncpg.Record = await self.bot.database.fetchrow(query, guild.id)
-        if data:
-            self.__dict__[guild.id] = data['prefix']
-            return data['prefix']
+        _data: asyncpg.Record = await self.bot.database.fetchrow(query, guild.id)
+        if _data:
+            self.data[guild.id] = _data['prefix']
+            return _data['prefix']
 
         return None
 
@@ -53,7 +54,7 @@ class Prefix(dict):
         query = 'INSERT INTO prefixes (prefix, guild_id) VALUES ($1, $2);'
         await self.bot.database.execute(query, prefix, guild.id)
 
-        self.__dict__[guild.id] = prefix
+        self.data[guild.id] = prefix
 
         log.debug('Prefix %s added for Guild ID: %s', prefix, guild.id)
 
@@ -63,12 +64,12 @@ class Prefix(dict):
 
         # Safe Mode: If the prefix is not in cache (like in the case mentioned in bot.get_prefix),
         # we don't need to raise any Exception
-        self.__dict__.pop(guild.id, None)
+        self.data.pop(guild.id, None)
 
         log.debug('Prefix removed for Guild ID: %s', guild.id)
 
     async def fill(self) -> None:
-        data: List[asyncpg.Record] = await self.bot.database.fetch('SELECT guild_id, prefix FROM prefixes;')
-        for row in data:
-            self.__dict__[row['guild_id']] = row['prefix']
+        _data: List[asyncpg.Record] = await self.bot.database.fetch('SELECT guild_id, prefix FROM prefixes;')
+        for row in _data:
+            self.data[row['guild_id']] = row['prefix']
         log.debug('Filled prefix cache')
