@@ -52,10 +52,10 @@ class ApertureCache:
         """Starts all the task"""
         # We don't start our tasks here since we also need to close them on shutdown,
         # and to keep consistency, we'll start it in main bot subclass
-        self.command_usage.dump_in_database.start()
+        self.command_usage.dump_task.start()
         log.debug('Cache routine tasks started')
 
     async def stop_cache_tasks(self) -> None:
         # Stopping allows tasks to complete their current running iteration, so it may take time for the tasks to stop.
-        self.command_usage.dump_in_database.stop()
+        self.command_usage.dump_task.stop()
         log.debug('Cache routine tasks stopepd')

@@ -19,6 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 from typing import List, Optional, Tuple, TYPE_CHECKING
 
+import asyncio
 from collections import UserList
 import logging
 
@@ -41,6 +42,7 @@ class CommandUsage(UserList):
     def __init__(self, bot: ApertureBot) -> None:
         super().__init__()
         self.bot = bot
+        self.lock = asyncio.Lock()
 
     async def add(
         self,
@@ -58,8 +60,7 @@ class CommandUsage(UserList):
             }
         )
 
-    @tasks.loop(seconds=30)
-    async def dump_in_database(self):
+    async def _dump_in_database(self):
         if self.data:
             # Make a copy of the dict and instantly clear the original to prevent 
             # inconsistency of stats because of time taken by database
@@ -74,3 +75,12 @@ class CommandUsage(UserList):
                 'INSERT INTO command_stats (name, type, user_id, guild_id) VALUES ($1, $2, $3, $4);', values
             )
             log.debug('Dumped command stats into database and cleared it\'s cache')
+
+    @tasks.loop(seconds=30)
+    async def dump_task(self):
+        async with self.lock:
+            await self._dump_in_database()
+
+    @_dump_in_database.after_loop
+    async def dump_task_safe_fallback(self):
+        await self._dump_in_database()
