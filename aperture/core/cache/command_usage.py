@@ -81,6 +81,6 @@ class CommandUsage(UserList):
         async with self.lock:
             await self._dump_in_database()
 
-    @_dump_in_database.after_loop
+    @dump_task.after_loop
     async def dump_task_safe_fallback(self):
         await self._dump_in_database()
