@@ -199,7 +199,7 @@ class Snekbox:
 
             response, error = self.get_return_message(result)
             content = error if error else stdout
-            output = response + '\n\n' + '```py\n' + content + '```'
+            output = response +  '\n\n' + '```\n' + '[No Output]' + '```' if not content else '\n\n' + '```py\n' + content + '```'
 
             if len(output.split('\n')) > 15 or len(output) > 1900: # Idk, Just in case, keep the max limit a bit less than 2000
                 buffer = io.StringIO(content)
