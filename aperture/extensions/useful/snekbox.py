@@ -208,5 +208,3 @@ class Snekbox:
                 return await ctx.send(response, file=file)
 
             return await ctx.reply(output)
-
-# TODO: fix cooldown for owner

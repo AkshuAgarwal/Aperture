@@ -38,7 +38,7 @@ class ApertureCooldown:
         """Required Cooldowns: `premium_cooldown`, `normal_cooldown`"""
 
         # Bypass cooldown for bot owner
-        if message.author.id == self.bot.owner_id:
+        if message.author.id == self.bot.owner_id or message.author.id in self.bot.owner_ids:
             return None
 
         # Returns shorter cooldowns for premium users and guilds
