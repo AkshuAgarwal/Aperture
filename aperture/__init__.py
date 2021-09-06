@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 from __future__ import annotations
-from typing import Any, Callable, List, Optional, Union, TYPE_CHECKING
+from typing import Any, Callable, List, Optional, Set, Union, TYPE_CHECKING
 
 import os
 import asyncio
@@ -82,7 +82,6 @@ class ApertureBot(commands.Bot):
             intents = intents,
             max_messages = None,
             member_cache_flags = member_cache_flags,
-            owner_ids=constants.OWNER_IDS,
             strip_after_prefix = True,
         )
         log.debug('Initialised the Bot class')
@@ -145,6 +144,8 @@ class ApertureBot(commands.Bot):
         self.webhook_client = ApertureManagementWebhookClient(self.http_session)
         log.debug('Initialized Management Webhook Client')
 
+        await self.dump_owner_info()
+
         # (Try to) Migrate the Database at startup
         with open('./aperture.sql', 'r', encoding='utf-8') as sql_file:
             data = sql_file.readlines()
@@ -162,6 +163,13 @@ class ApertureBot(commands.Bot):
         self.ready = True
         print('Setup completed! Bot is ready to be operated')
         log.info('Setup completed! Bot is ready to be operated')
+
+    async def dump_owner_info(self) -> None:
+        app_info: discord.AppInfo = await self.application_info()
+        if not app_info.team:
+            self.owner_id: int = app_info.owner.id
+        else:
+            self.owner_ids: Set[int] = {member.id for member in app_info.team.members}
 
 
     def run(self, token: str, *_: Any, **kwargs: Any) -> None:
