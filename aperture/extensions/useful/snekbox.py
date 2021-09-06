@@ -66,21 +66,22 @@ ESCAPE_REGEX = re.compile("[`\u202E\u200B]{3,}")
 class Snekbox:
     def __init__(self, bot: ApertureBot) -> None:
         self.bot = bot
-        self._cooldown_creator = ApertureCooldown(
-            bot,
-            **{
-                'normal_cooldown': commands.Cooldown(3, 30),
-                'premium_cooldown': commands.Cooldown(3, 15)
-            }
-        )
+        
         kwargs = self._prepare_command()
-        self._command = commands.Command(self.callback, **kwargs)
+        self.command = commands.Command(self.callback, **kwargs)
 
         self.snekbox_url: str = os.getenv('SNEKBOX_URL')
         self.running_jobs: Set[int] = set()
 
 
     def _prepare_command(self) -> CommandKwargsPayload:
+        cooldown_creator = ApertureCooldown(
+            self.bot,
+            **{
+                'normal_cooldown': commands.Cooldown(3, 30),
+                'premium_cooldown': commands.Cooldown(3, 15)
+            }
+        )
         kwargs: CommandKwargsPayload = {
             'name': 'snekbox',
             'aliases': ['eval', 'exec'],
@@ -92,7 +93,7 @@ class Snekbox:
                     `code`: The code to evaluate. This can be a raw string, a simple code block, or a python language highlighted code block.
                     """,
             'usage': '<code: str>',
-            'cooldown': commands.DynamicCooldownMapping(self._cooldown_creator.default_cooldown, type=commands.BucketType.user),
+            'cooldown': commands.DynamicCooldownMapping(cooldown_creator.default_cooldown, type=commands.BucketType.user),
             'max_concurrency': commands.MaxConcurrency(10, per=commands.BucketType.guild, wait=False),
         }
         return kwargs

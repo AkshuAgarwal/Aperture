@@ -1,6 +1,6 @@
 from __future__ import annotations
-
 from typing import Tuple, TYPE_CHECKING
+
 from discord.ext import commands
 
 from .snekbox import Snekbox
@@ -15,7 +15,7 @@ class Useful(commands.Cog):
         self.bot = bot
 
         self.__cog_commands__: Tuple[commands.Command] = (
-            Snekbox(bot)._command,
+            Snekbox(bot).command,
         )
 
 def setup(bot: ApertureBot) -> None:
